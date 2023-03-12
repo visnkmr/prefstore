@@ -57,4 +57,7 @@ fn main() {
 
   
    println!("{}",getpreference(APPNAME,"start",false).tobool());
+
+   // in order to save whole blog posts to strings use the trait
+   //for post in posts{savepreference(APPNAME,post.title,post.content);}
 }
