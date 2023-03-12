@@ -1,0 +1,27 @@
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"
+lto = true
+panic = "abort"
+
+[package]
+name = "preferencestore"
+version = "0.1.0"
+edition = "2021"
+author = ["visnk"]
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dirs = "4.0.0"
+# dirs = "4.0.0"
+# serde = { version = "1.0.140", features = ["derive"] }
+# serde-xml-rs = "0.6.0"
+# thiserror = "1.0.30"
+# xml-rs="0.8.4"
+# quick-xml="0.27.1"
+# minidom="0.15.0"
+# xmltree="0.10.3"
+# serde = {version = "1.0.140", features = ["derive"]}
+# serde_json="1.0"
