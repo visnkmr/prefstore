@@ -10,14 +10,15 @@ panic = "abort"
 
 
 [package]
-name = "prefstoretest"
+name = "ps_example"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-preferencestore = { path = "../xbel_bookmarks" }
+prefstore = { path = "../prefstore" }
+chrono = "0.4.23"
 # iron = ">=0.5, <0.7"
 # params = "0.8.0"
 # execute = "0.2.11"
