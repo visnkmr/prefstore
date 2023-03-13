@@ -59,7 +59,7 @@ pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<Str
     //create new file named key and save value
     create_dir_all(&config_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
     write!(File::create(&config_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
-    println!("saved successfully to {}",config_path(&app_name,&key).to_string_lossy())
+    // println!("saved successfully to {}",config_path(&app_name,&key).to_string_lossy())
 }
 
 fn default_name(filename:String) -> String {
