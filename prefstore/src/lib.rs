@@ -1,57 +1,19 @@
 #![allow(warnings)] 
 
-use std::{fs::{File, create_dir_all}, io::{Write,BufReader, self}, path::{PathBuf, Path}};
+use std::{fs::{File, create_dir_all, remove_file}, io::{Write,BufReader, self}, path::{PathBuf, Path}};
 use dirs;
 use std::env::var;
 const MSG_NO_SYSTEM_CONFIG_DIR: &str = "no system config directory detected";
 
-fn saveany<T>(x: T)->T {
-    // do something with x"
-    // return 
-    x
-}
-// pub struct prefstore {
-// 	/// App name under which app settings are typically to be stored.
-// 	pub app: String,
+// pub fn setname(appname:String)->String{
+//     appname
 // }
-//  pub enum prefstore{
-//     Name(String)
-// }
-// impl name for prefstore{
-    
-// }
-
-pub fn setname(appname:String)->String{
-    appname
-}
-// impl ems<String> for String{}
-// trait name{
-//     fn savepreference<T: ToString>(key: impl Into<String>,value:T);
-//     fn default_name(filename:String) -> String;
-//     fn config_path(filename:impl Into<String>) -> PathBuf;
-//     fn getpreference<T:ToString>(key:impl Into<String>,defvalue:T)->String;
-//     // APPNAME:String;
-//  }
- 
- 
-//  pub struct setname{
- 
-//  }
-//  impl name for setname{
-//  const fn setname(appn:String){
-    
-//  }
-// pub struct prefstore {
-// 	/// App name under which app settings are typically to be stored.
-// 	pub app: String
-// }
-// impl prefstore {
-
-//     pub fn setappname(nameofapp:String){
-//         app=nameofapp
-//     }
-// }
-
+/*
+app_name: Folder in config dir to store the file key with value to.
+key: filename of the pref, a key.txt can be found at the folder app_name
+value: the content of the file specified by key
+value can be any type that supports to string
+ */
 pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
     let key=key.into();
     let app_name=app_name.into();
@@ -68,7 +30,7 @@ fn default_name(filename:String) -> String {
 
 fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
 
-    let app= var("CARGO_PKG_NAME").unwrap_or_else(|_| env!("CARGO_PKG_NAME").to_string());
+    // let app= var("CARGO_PKG_NAME").unwrap_or_else(|_| env!("CARGO_PKG_NAME").to_string());
     
     match(dirs::config_dir()){
         Some(system_config_dir) =>{
@@ -77,12 +39,17 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
                     .join(default_name(filename.into()))
         },
         None => {
-           PathBuf::new()
+           println!("{}", MSG_NO_SYSTEM_CONFIG_DIR.to_string());
+           todo!()
             // io::Error::new(io::ErrorKind::NotFound, MSG_NO_SYSTEM_CONFIG_DIR)
         },
     }
 }
-
+pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
+    remove_file(&config_path(&app_name.into(),&key.into())).expect("Could not clear preference.");
+}
+/*
+the methods to parse value returned by getpreference for bool and i32 are provided the remaining will have to parse from returned string */
 pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
     //Try to open file named key, If not found return defvalue
     use io::Read;
@@ -104,6 +71,9 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
 
 // }
 
+/*
+methods to convert returned strings to bool,i32, you can also use .parse on string to parse to required format
+ */
 pub trait ems<T>{
     fn tobool(self)->bool;
     fn toi32(self)->i32;
