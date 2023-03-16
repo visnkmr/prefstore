@@ -29,8 +29,6 @@ fn default_name(filename:String) -> String {
 }
 
 fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
-
-    // let app= var("CARGO_PKG_NAME").unwrap_or_else(|_| env!("CARGO_PKG_NAME").to_string());
     
     match(dirs::config_dir()){
         Some(system_config_dir) =>{

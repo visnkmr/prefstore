@@ -15,6 +15,10 @@ homepage = "https://github.com/visnkmr/prefstore"
 repository = "https://github.com/visnkmr/prefstore"
 keywords = ["settings", "preferences", "config", "options"]
 categories = ["config"]
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+]
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
