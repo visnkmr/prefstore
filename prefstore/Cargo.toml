@@ -18,6 +18,7 @@ categories = ["config"]
 include = [
     "**/*.rs",
     "Cargo.toml",
+    "README.md"
 ]
 
 
