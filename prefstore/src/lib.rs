@@ -1,6 +1,8 @@
 #![allow(warnings)] 
 
-use std::{fs::{File, create_dir_all, remove_file}, io::{Write,BufReader, self}, path::{PathBuf, Path}};
+
+
+use std::{fs::{File, create_dir_all, remove_file}, io::{Write,BufReader, self}, path::{PathBuf, Path}, collections::HashMap};
 use dirs;
 use std::env::var;
 const MSG_NO_SYSTEM_CONFIG_DIR: &str = "no system config directory detected";
@@ -52,6 +54,7 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
     //Try to open file named key, If not found return defvalue
     use io::Read;
     let key =key.into();
+    // let defvalue =defvalue.into();
     let app_name =app_name.into();
     // let defvalue=defvalue.into();
 				match(File::open(&config_path(&app_name,&key))){
@@ -94,3 +97,108 @@ impl ems<String> for String{
     }
     
 } 
+
+// #[derive(Debug, PartialEq, Clone, Default)]
+// pub struct forsession {
+// 	hamap:HashMap<String,String>,
+//     // havec:Vec<String>
+// }
+
+// impl forsession {
+// 	fn save<T: ToString>(&mut self,key: impl Into<String>,value:impl Into<String>){
+//     self.hamap.insert(key.into(), value.into());
+//     }
+
+//     // fn get<T:ToString>(&self,key:impl Into<String>)->String{
+//     //     match(self.hamap.get(&key.into())){
+//     //         Some(rstring) => rstring.to_string(),
+//     //         None => {
+//     //             "No value for key found".into()
+//     //         },
+//     //     }
+//     // }
+//     fn safeget<T:ToString>(&mut self,key:impl Into<String>,defvalue:impl ToString)->String{
+//         match(self.hamap.get(&key.into())){
+//                     Some(rstring) => {
+//                         rstring.to_string()
+//                     },
+//                     None => {
+//                         self.save(key, &defvalue.to_string());
+//                         "No value for key found".to_string()
+//                     },
+//                 };
+//         defvalue.to_string()
+//     }
+//     fn get<T:ToString>(&self,key:impl Into<String>)->String{
+//         match(self.hamap.get(&key.into())){
+//                     Some(rstring) => {
+//                         rstring.to_string()
+//                     },
+//                     None => {
+//                         "".to_string();
+//                         "No value for key found".to_string()
+//                     },
+//                 }
+        
+//     }
+    
+// }
+
+#[cfg(test)]
+mod prefstore_test{
+    use super::*;
+
+    #[test]
+    fn prefstore_working(){
+    //   let key="key".to_string() ;
+    //   let value="value".to_string() ;
+
+    const APPNAME:&str="prefstore";
+   // println!("hello");
+   let set =true;
+   savepreference(APPNAME,"boolean",set);
+   assert_eq!(getpreference(APPNAME,"boolean",false).tobool(),set) ;
+   clearpreference(APPNAME, "boolean");
+
+   let set=9;
+   savepreference(APPNAME,"i32",set);
+   assert_eq!(getpreference(APPNAME,"i32",0).toi32(),set) ;
+   clearpreference(APPNAME, "i32");
+
+   let set=6.8;
+   savepreference(APPNAME,"f64",set);
+   assert_eq!(getpreference(APPNAME,"f64",0.0).parse::<f64>().unwrap(),set) ;
+   clearpreference(APPNAME, "f64");
+
+   let set:i128=99999999999999999999999999999999999999;
+   
+   savepreference(APPNAME,"verylongi",set);
+   assert_eq!(getpreference(APPNAME,"verylongi",0).parse::<i128>().unwrap(),set) ;
+   clearpreference(APPNAME, "verylongi");
+//    let mut places = vec!["Paris", "New York"];
+//     places.push("Madrid");
+//     places.push("Toronto");
+//    let set=["test","try"];
+//    savepreference("strarr",places);
+//    println!("test");
+//    thread::spawn(move || loop {
+//       // println!("fromhere------------>1");
+//       let date = Local::now();
+//       let current_date = date.format("%Y-%m-%d").to_string();
+//       let k= getpreference(&current_date,0 as u128).parse::<u128>().unwrap();
+
+//       println!("{}",getpreference(&current_date,0 as u128).parse::<u128>().unwrap());
+
+//       thread::sleep(Duration::from_secs(60));
+//   });
+
+    savepreference(APPNAME,"start",true);
+    // let forsession= forsession{
+    //     hamap:HashMap<String,String>
+    // };
+    // forsession::save(this,key,value);
+    assert_eq!(true,getpreference(APPNAME,"start",false).tobool());
+    clearpreference(APPNAME, "start");
+    // println!("{}",getpreference(APPNAME,"start",false).tobool());
+}
+}
