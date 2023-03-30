@@ -147,6 +147,21 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
                     },
                 }
 }
+pub fn getpreferencenodefault(app_name:impl Into<String>,key:impl Into<String>)->String{
+    use io::Read;
+    let key =key.into();
+    let app_name =app_name.into();
+				match(File::open(&config_path(&app_name,&key))){
+                    Ok(mut file) => {
+                        let mut buf = String::new();
+                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        buf
+                    },
+                    Err(_) => {
+                        String::new()
+                    },
+                }
+}
 
 pub trait ems<T>{
     /// Converts a String to a bool.
@@ -273,6 +288,30 @@ fn getdecoded(input:&str)->String{
 //     // }
 //     vec![]
 // }
+pub fn addlistasjson<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:Vec<T>)
+{
+    let app_name:String=app_name.into();
+    let key:String=key.into();
+    let mut listofvecs:Vec<String>=
+    // match(getfromlist(app_name.clone(), key.clone())){
+    //     Ok(alreadycontents) => alreadycontents,
+    //     Err(_) => 
+        Vec::new();
+    //     ,
+    // };
+    // let vecofwhat=value.to_string().as_bytes();
+    // let encoded: String = getencodedstring(value.to_string());
+    // let encoded: String = (value.to_string());//getencodedstring
+    // let utf8_bytes_list: Vec<&[u8]> = value.to_string().chars().into_iter().map(|s| s.as_bytes()).collect();
+    for a in value{
+        listofvecs.push(a.to_string());
+    }
+    
+    savepreference(app_name.clone(),key.clone(),serde_json::to_string_pretty(&listofvecs).unwrap());
+        
+    // savepreference(app_name.clone(),key.clone(),serde_json::to_string(&listofvecs).unwrap())
+}
+
 pub fn addtolist<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
     let app_name:String=app_name.into();
     let key:String=key.into();
@@ -281,6 +320,7 @@ pub fn addtolist<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,
         Err(_) => Vec::new(),
     };
     // let vecofwhat=value.to_string().as_bytes();
+    // let encoded: String = getencodedstring(value.to_string());
     let encoded: String = getencodedstring(value.to_string());
     // let utf8_bytes_list: Vec<&[u8]> = value.to_string().chars().into_iter().map(|s| s.as_bytes()).collect();
     listofvecs.push(encoded);
@@ -321,6 +361,37 @@ pub fn getfromlist(app_name:impl Into<String>,key:impl Into<String>)->Result<Vec
     // vec![]
     Ok(vec_of_string)
 }
+pub fn getfromlistasjson(app_name:impl Into<String>,key:impl Into<String>)->Result<Vec<String>,()>{
+    let key =key.into();
+    let app_name =app_name.into();
+    let input= match(File::open(&config_path(&app_name,&key))){
+        Ok(mut file) => {
+            let mut buf = String::new();
+            file.read_to_string(&mut buf).expect("Cannot read to string");
+            buf
+        },
+        Err(_) => {
+            return Err(())
+            // savepreference(app_name,&key, &defvalue.to_string());
+            // defvalue.to_string()
+        },
+    };
+    let file=File::open(&config_path(&app_name,&key)).map_err(|err|{
+        eprintln!("Fil coild not be opened:{err}")
+
+    })?;
+    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
+    let listdecoded:Vec<String>=serde_json::from_reader(BufReader::new(file)).map_err(|err|{
+        eprintln!("Fil coild not be opened:{err}")
+
+    })?;
+    // let vec_of_string = listdecoded.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>();
+    // url2str(j)
+    // get_decoded_string(j);
+    // vec![]
+    Ok(listdecoded)
+}
+
 pub fn getallfromlist(app_name:impl Into<String>)->Vec<(String,String)>{
     let app_name=app_name.into();
     // println!("{app_name}");
@@ -351,6 +422,120 @@ pub fn getallfromlist(app_name:impl Into<String>)->Vec<(String,String)>{
 
                 // for i in vec_of_string{
                     list_of_strings.push((file_name.to_owned(),vec_of_string));
+                // }
+                
+            },
+            Err(e) => {
+                eprintln!("error with glob {:?}", e);
+                
+            },
+        }
+    }
+    
+    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
+    // url2str(j)
+    // get_decoded_string(j);
+    // vec![]
+    list_of_strings
+}
+fn readserdefromfile(input:&File)->Result<Vec<String>,()>{
+    let listdecoded:Vec<String>=serde_json::from_reader(BufReader::new(input)).map_err(|err|{
+        eprintln!("Fil could not be opened:{err}")
+
+    })?;
+    Ok(listdecoded)
+}
+#[test]
+fn test_addtojson(){
+    let g=vec!["date","event","status","description","repeat"];
+    addlistasjson("todo","test", g.clone());
+    addlistasjson("todo","test1", g.clone());
+    addlistasjson("todo","test2", g.clone());
+    // println!("{:?}", getfromjsonlist("todo","test").unwrap());
+    assert_eq!(g,getfromlistasjson("todo","test").unwrap());
+    println!("{:?}",getallasjsonlist("todo"))
+}
+pub fn getallasjsonlist(app_name:impl Into<String>)->Vec<(String,Vec<String>)>{
+    let app_name=app_name.into();
+    // println!("{app_name}");
+    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
+    // println!("{}",gh);
+    // let key =key.into();
+    gh.push_str("/*.txt");
+    let mut list_of_strings:Vec<(String,Vec<String>)>=vec![];
+    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
+    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+        match entry {
+
+            Ok(path) =>{
+                let input= match(File::open(&path)){
+                    Ok(mut file) => {
+                        // let mut buf = String::new();
+                        // file.read_to_string(&mut buf).expect("Cannot read to string");
+                        // buf
+                        file
+                    },
+                    Err(_) => {
+                        return vec![]
+                        // savepreference(app_name,&key, &defvalue.to_string());
+                        // defvalue.to_string()
+                    },
+                };
+                // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
+                println!("{:?}",input);
+                let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
+                let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
+
+                // for i in vec_of_string{
+                    list_of_strings.push((file_name.to_owned(),listdecoded));
+                // }
+                
+            },
+            Err(e) => {
+                eprintln!("error with glob {:?}", e);
+                
+            },
+        }
+    }
+    
+    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
+    // url2str(j)
+    // get_decoded_string(j);
+    // vec![]
+    list_of_strings
+}pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
+    let app_name=app_name.into();
+    // println!("{app_name}");
+    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
+    // println!("{}",gh);
+    // let key =key.into();
+    gh.push_str("/*.txt");
+    let mut list_of_strings:Vec<(String,String)>=vec![];
+    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
+    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+        match entry {
+
+            Ok(path) =>{
+                let input= match(File::open(&path)){
+                    Ok(mut file) => {
+                        let mut buf = String::new();
+                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        buf
+                        // file
+                    },
+                    Err(_) => {
+                        return vec![]
+                        // savepreference(app_name,&key, &defvalue.to_string());
+                        // defvalue.to_string()
+                    },
+                };
+                // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
+                println!("{:?}",input);
+                // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
+                let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
+
+                // for i in vec_of_string{
+                    list_of_strings.push((file_name.to_owned(),input));
                 // }
                 
             },
