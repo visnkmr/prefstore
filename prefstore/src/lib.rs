@@ -32,6 +32,12 @@ pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<Str
     create_dir_all(&config_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
     write!(File::create(&config_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
 }
+pub fn savecustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
+    let key=key.into();
+    let app_name=app_name.into();
+    create_dir_all(&customfile_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
+    write!(File::create(&customfile_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
+}
 
 /// Returns a default name for a preference file.
 ///
@@ -50,6 +56,9 @@ pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<Str
 /// ```
 fn default_name(filename:String) -> String {
     format!("{}.txt", filename).to_lowercase()
+}
+fn custom_default_name(filename:String) -> String {
+    format!("{}", filename).to_lowercase()
 }
 
 /// Returns the path to the configuration file for the given app_name and filename.
@@ -85,6 +94,18 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
         },
     }
 }
+fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
+    match(dirs::config_dir()){
+        Some(system_config_dir) =>{
+            system_config_dir
+                    .join(app_name)
+                    .join(custom_default_name(filename.into()))
+        },
+        None => {
+           panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
+        },
+    }
+}
 /// Removes the preference with the given key for the given app_name.
 ///
 /// # Arguments
@@ -105,6 +126,9 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
 /// This function will return an error if it is unable to remove the preference file.
 pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
     remove_file(&config_path(&app_name.into(),&key.into())).expect("Could not clear preference.");
+}
+pub fn clearcustom(app_name:impl Into<String>,key: impl Into<String>){
+    remove_file(&customfile_path(&app_name.into(),&key.into())).expect("Could not clear preference.");
 }
 
 // #[no_mangle]
@@ -143,6 +167,22 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
                     },
                     Err(_) => {
                         savepreference(app_name,&key, &defvalue.to_string());
+                        defvalue.to_string()
+                    },
+                }
+}
+pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
+    use io::Read;
+    let key =key.into();
+    let app_name =app_name.into();
+				match(File::open(&customfile_path(&app_name,&key))){
+                    Ok(mut file) => {
+                        let mut buf = String::new();
+                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        buf
+                    },
+                    Err(_) => {
+                        savecustom(app_name,&key, &defvalue.to_string());
                         defvalue.to_string()
                     },
                 }
