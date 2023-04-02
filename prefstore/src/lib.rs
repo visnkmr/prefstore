@@ -38,6 +38,12 @@ pub fn savecustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>
     create_dir_all(&customfile_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
     write!(File::create(&customfile_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
 }
+pub fn appendcustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
+    let key=key.into();
+    let app_name=app_name.into();
+    create_dir_all(&customfile_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
+    write!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
+}
 
 /// Returns a default name for a preference file.
 ///
