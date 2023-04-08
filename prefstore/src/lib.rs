@@ -29,20 +29,32 @@ const MSG_NO_SYSTEM_CONFIG_DIR: &str = "no system config directory detected";
 pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
     let key=key.into();
     let app_name=app_name.into();
-    create_dir_all(&config_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
-    write!(File::create(&config_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
+    let fname=" #savepreference";
+    create_dir_all(&config_path(&app_name,&key).parent()
+        .expect(&format!("Cannot find path to {fname}")))
+        .expect(&format!("cannot create dirs necessary to {fname}"));
+    write!(File::create(&config_path(&app_name,&key))
+        .expect(&format!("Cannot create {fname}")), "{}", value.to_string());
 }
 pub fn savecustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
     let key=key.into();
     let app_name=app_name.into();
-    create_dir_all(&customfile_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
-    write!(File::create(&customfile_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
+    let fname=" #savecustom";
+    create_dir_all(&customfile_path(&app_name,&key).parent()
+        .expect(&format!("Cannot find path to {fname}")))
+        .expect(&format!("cannot create dirs necessary to {fname}"));
+    write!(File::create(&customfile_path(&app_name,&key))
+        .expect("Cannot create file."), "{}", value.to_string());
 }
 pub fn appendcustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
     let key=key.into();
+    let fname=" #appendcustom";
     let app_name=app_name.into();
-    create_dir_all(&customfile_path(&app_name,&key).parent().expect("Cannot find some path to create config")).expect("cannot create dirs necessary to create config");
-    write!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key)).expect("Cannot create file."), "{}", value.to_string());
+    create_dir_all(&customfile_path(&app_name,&key).parent()
+        .expect(&format!("Cannot find path to {fname}")))
+        .expect(&format!("cannot create dirs necessary to {fname}"));
+    write!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key))
+        .expect("Cannot create file."), "{}", value.to_string());
 }
 
 /// Returns a default name for a preference file.
@@ -100,6 +112,9 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
         },
     }
 }
+pub fn prefstore_directory(app_name:&String)->Result<PathBuf,()>{
+    Ok(dirs::config_dir().expect("Config folder does not exist").join(app_name))    
+}
 fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
     match(dirs::config_dir()){
         Some(system_config_dir) =>{
@@ -131,10 +146,12 @@ fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
 ///
 /// This function will return an error if it is unable to remove the preference file.
 pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
-    remove_file(&config_path(&app_name.into(),&key.into())).expect("Could not clear preference.");
+    remove_file(&config_path(&app_name.into(),&key.into()))
+        .expect("Could not clear preference.");
 }
 pub fn clearcustom(app_name:impl Into<String>,key: impl Into<String>){
-    remove_file(&customfile_path(&app_name.into(),&key.into())).expect("Could not clear preference.");
+    remove_file(&customfile_path(&app_name.into(),&key.into()))
+        .expect("Could not clear preference.");
 }
 
 // #[no_mangle]
@@ -168,7 +185,8 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
 				match(File::open(&config_path(&app_name,&key))){
                     Ok(mut file) => {
                         let mut buf = String::new();
-                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        file.read_to_string(&mut buf)
+                            .expect("Cannot read to string");
                         buf
                     },
                     Err(_) => {
@@ -184,7 +202,8 @@ pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,de
 				match(File::open(&customfile_path(&app_name,&key))){
                     Ok(mut file) => {
                         let mut buf = String::new();
-                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        file.read_to_string(&mut buf)
+                            .expect("Cannot read to string");
                         buf
                     },
                     Err(_) => {
@@ -200,7 +219,8 @@ pub fn getpreferencenodefault(app_name:impl Into<String>,key:impl Into<String>)-
 				match(File::open(&config_path(&app_name,&key))){
                     Ok(mut file) => {
                         let mut buf = String::new();
-                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        file.read_to_string(&mut buf)
+                            .expect("Cannot read to string");
                         buf
                     },
                     Err(_) => {
@@ -391,7 +411,8 @@ pub fn getfromlist(app_name:impl Into<String>,key:impl Into<String>)->Result<Vec
     let input= match(File::open(&config_path(&app_name,&key))){
         Ok(mut file) => {
             let mut buf = String::new();
-            file.read_to_string(&mut buf).expect("Cannot read to string");
+            file.read_to_string(&mut buf)
+                .expect("Cannot read to string");
             buf
         },
         Err(_) => {
@@ -413,7 +434,8 @@ pub fn getfromlistasjson(app_name:impl Into<String>,key:impl Into<String>)->Resu
     let input= match(File::open(&config_path(&app_name,&key))){
         Ok(mut file) => {
             let mut buf = String::new();
-            file.read_to_string(&mut buf).expect("Cannot read to string");
+            file.read_to_string(&mut buf)
+                .expect("Cannot read to string");
             buf
         },
         Err(_) => {
@@ -447,7 +469,8 @@ pub fn getallfromlist(app_name:impl Into<String>)->Vec<(String,String)>{
     gh.push_str("/*.txt");
     let mut list_of_strings:Vec<(String,String)>=vec![];
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+    for entry in glob::glob(&gh)
+        .expect("Failed to read glob pattern") {
         match entry {
 
             Ok(path) =>{
@@ -510,7 +533,8 @@ pub fn getallasjsonlist(app_name:impl Into<String>)->Vec<(String,Vec<String>)>{
     gh.push_str("/*.txt");
     let mut list_of_strings:Vec<(String,Vec<String>)>=vec![];
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+    for entry in glob::glob(&gh)
+        .expect("Failed to read glob pattern") {
         match entry {
 
             Ok(path) =>{
@@ -558,7 +582,8 @@ pub fn getallasjsonlist(app_name:impl Into<String>)->Vec<(String,Vec<String>)>{
     gh.push_str("/*.txt");
     let mut list_of_strings:Vec<(String,String)>=vec![];
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+    for entry in glob::glob(&gh)
+        .expect("Failed to read glob pattern") {
         match entry {
 
             Ok(path) =>{

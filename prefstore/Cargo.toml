@@ -9,9 +9,9 @@
 
 [package]
 name = "prefstore"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
-author = ["visnk"]
+author = ["visnkmr"]
 description = "A rust crate to Easily store and retrieve preferences in rust."
 license = "MIT"
 homepage = "https://github.com/visnkmr/prefstore"
