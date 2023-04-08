@@ -113,7 +113,11 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
     }
 }
 pub fn prefstore_directory(app_name:&String)->Result<PathBuf,()>{
-    Ok(dirs::config_dir().expect("Config folder does not exist").join(app_name))    
+    Ok(
+        dirs::config_dir()
+        .expect("Config folder does not exist")
+        .join(app_name)
+    )    
 }
 fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
     match(dirs::config_dir()){
@@ -575,56 +579,56 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 //     list_of_strings
 // }
 
-pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
-    let app_name=app_name.into();
-    // println!("{app_name}");
-    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
-    // println!("{}",gh);
-    // let key =key.into();
-    gh.push_str("/*.txt");
-    let mut list_of_strings:Vec<(String,String)>=vec![];
-    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh)
-        .expect("Failed to read glob pattern") {
-        match entry {
+// pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
+//     let app_name=app_name.into();
+//     // println!("{app_name}");
+//     let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
+//     // println!("{}",gh);
+//     // let key =key.into();
+//     gh.push_str("/*.txt");
+//     let mut list_of_strings:Vec<(String,String)>=vec![];
+//     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
+//     for entry in glob::glob(&gh)
+//         .expect("Failed to read glob pattern") {
+//         match entry {
 
-            Ok(path) =>{
-                let input= match(File::open(&path)){
-                    Ok(mut file) => {
-                        let mut buf = String::new();
-                        file.read_to_string(&mut buf).expect("Cannot read to string");
-                        buf
-                        // file
-                    },
-                    Err(_) => {
-                        return vec![]
-                        // savepreference(app_name,&key, &defvalue.to_string());
-                        // defvalue.to_string()
-                    },
-                };
-                // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
-                println!("{:?}",input);
-                // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
-                let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
+//             Ok(path) =>{
+//                 let input= match(File::open(&path)){
+//                     Ok(mut file) => {
+//                         let mut buf = String::new();
+//                         file.read_to_string(&mut buf).expect("Cannot read to string");
+//                         buf
+//                         // file
+//                     },
+//                     Err(_) => {
+//                         return vec![]
+//                         // savepreference(app_name,&key, &defvalue.to_string());
+//                         // defvalue.to_string()
+//                     },
+//                 };
+//                 // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
+//                 println!("{:?}",input);
+//                 // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
+//                 let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
 
-                // for i in vec_of_string{
-                    list_of_strings.push((file_name.to_owned(),input));
-                // }
+//                 // for i in vec_of_string{
+//                     list_of_strings.push((file_name.to_owned(),input));
+//                 // }
                 
-            },
-            Err(e) => {
-                eprintln!("error with glob {:?}", e);
+//             },
+//             Err(e) => {
+//                 eprintln!("error with glob {:?}", e);
                 
-            },
-        }
-    }
+//             },
+//         }
+//     }
     
-    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-    // url2str(j)
-    // get_decoded_string(j);
-    // vec![]
-    list_of_strings
-}
+//     // let j:Vec<String>=serde_json::from_str(&input).unwrap();
+//     // url2str(j)
+//     // get_decoded_string(j);
+//     // vec![]
+//     list_of_strings
+// }
 // #[test]
 //     fn work_with_list(){
 //         // clearpreference(app_name, key)
