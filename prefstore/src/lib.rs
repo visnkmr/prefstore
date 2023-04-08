@@ -113,7 +113,11 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
     }
 }
 pub fn prefstore_directory(app_name:&String)->Result<PathBuf,()>{
-    Ok(dirs::config_dir().expect("Config folder does not exist").join(app_name))    
+    Ok(
+        dirs::config_dir()
+        .expect("Config folder does not exist")
+        .join(app_name)
+    )    
 }
 fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
     match(dirs::config_dir()){
