@@ -36,8 +36,8 @@ pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<Str
     write!(File::create(&config_path(&app_name,&key))
         .expect(&format!("Cannot create {fname}")), "{}", value.to_string());
 }
-pub fn savecustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
-    let key=key.into();
+pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
+    let key=custom_filename_with_extension.into();
     let app_name=app_name.into();
     let fname=" #savecustom";
     create_dir_all(&customfile_path(&app_name,&key).parent()
@@ -46,8 +46,8 @@ pub fn savecustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>
     write!(File::create(&customfile_path(&app_name,&key))
         .expect("Cannot create file."), "{}", value.to_string());
 }
-pub fn appendcustom<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
-    let key=key.into();
+pub fn appendcustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
+    let key=custom_filename_with_extension.into();
     let fname=" #appendcustom";
     let app_name=app_name.into();
     create_dir_all(&customfile_path(&app_name,&key).parent()
@@ -75,7 +75,7 @@ pub fn appendcustom<T: ToString>(app_name:impl Into<String>,key: impl Into<Strin
 fn default_name(filename:String) -> String {
     format!("{}.txt", filename).to_lowercase()
 }
-fn custom_default_name(filename:String) -> String {
+fn custom_file_name(filename:String) -> String {
     format!("{}", filename).to_lowercase()
 }
 
@@ -120,7 +120,7 @@ fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
         Some(system_config_dir) =>{
             system_config_dir
                     .join(app_name)
-                    .join(custom_default_name(filename.into()))
+                    .join(custom_file_name(filename.into()))
         },
         None => {
            panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
@@ -149,8 +149,8 @@ pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
     remove_file(&config_path(&app_name.into(),&key.into()))
         .expect("Could not clear preference.");
 }
-pub fn clearcustom(app_name:impl Into<String>,key: impl Into<String>){
-    remove_file(&customfile_path(&app_name.into(),&key.into()))
+pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>){
+    remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))
         .expect("Could not clear preference.");
 }
 
