@@ -36,6 +36,23 @@ pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<Str
     write!(File::create(&config_path(&app_name,&key))
         .expect(&format!("Cannot create {fname}")), "{}", value.to_string());
 }
+/// Save custom data to a file with the given app name, filename, and value.
+///
+/// This function creates a directory with the name `custom_filename_with_extension` in a
+/// path defined by the `customfile_path` function. The `create_dir_all` function is called
+/// to ensure that all the necessary directories are created for the specified path.
+///
+/// # Arguments
+///
+/// * `app_name` - A parameter of type `impl Into<String>`, which means it can accept any type that can be converted into a `String`.
+/// * `custom_filename_with_extension` - A parameter of type `impl Into<String>`, which also accepts any type that can be converted into a `String`.
+/// * `value` - The last parameter is of type `T` that implements the `ToString` trait.
+///
+/// # Examples
+///
+/// ```rust
+/// savecustom("my_app", "my_file.txt", "Hello, world!");
+/// ```
 pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
     let key=custom_filename_with_extension.into();
     let app_name=app_name.into();
@@ -46,6 +63,17 @@ pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_e
     write!(File::create(&customfile_path(&app_name,&key))
         .expect("Cannot create file."), "{}", value.to_string());
 }
+/// Appends a value to a custom file for the given application.
+///
+/// # Arguments
+///
+/// * `app_name` - The name of the application.
+/// * `custom_filename_with_extension` - The name of the custom file, including its extension.
+/// * `value` - The value to append to the file.
+///
+/// # Example
+///
+/// ```rust
 pub fn appendcustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
     let key=custom_filename_with_extension.into();
     let fname=" #appendcustom";
@@ -112,6 +140,23 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
         },
     }
 }
+/// Returns the directory path for storing preferences for the given app.
+///
+/// # Arguments
+///
+/// * `app_name` - A reference to a string representing the name of the app.
+///
+/// # Returns
+///
+/// A `Result` with the `PathBuf` representing the directory path for storing preferences for the app or an empty `()` if the config folder does not exist.
+///
+/// # Example
+///
+/// ```
+/// use myapp::prefstore_directory;
+/// let app_name = String::from("myapp");
+/// let directory = prefstore_directory(&app_name);
+/// ```
 pub fn prefstore_directory(app_name:&String)->Result<PathBuf,()>{
     Ok(
         dirs::config_dir()
@@ -119,18 +164,35 @@ pub fn prefstore_directory(app_name:&String)->Result<PathBuf,()>{
         .join(app_name)
     )    
 }
+/// Returns the path to a custom file given the `app_name` and the `filename` 
+/// for the custom file. It joins the system configuration directory, the 
+/// `app_name`, and the custom file name to create the full path.
+///
+/// # Arguments
+///
+/// * `app_name` - A reference to a `String` containing the name of the application.
+/// * `filename` - A value that can be converted into a `String` containing the name of 
+///                the custom file.
+///
+/// # Returns
+///
+/// The full path to the custom file as a `PathBuf` object.
 fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
+    // Get the system configuration directory.
     match(dirs::config_dir()){
         Some(system_config_dir) =>{
+            // Join the system configuration directory, the app name, and the custom file name.
             system_config_dir
                     .join(app_name)
                     .join(custom_file_name(filename.into()))
         },
         None => {
+            // If there is no system configuration directory, panic with an error message.
            panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
         },
     }
 }
+
 /// Removes the preference with the given key for the given app_name.
 ///
 /// # Arguments
@@ -153,6 +215,46 @@ pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
     remove_file(&config_path(&app_name.into(),&key.into()))
         .expect("Could not clear preference.");
 }
+/// Deletes the custom file with the given name for the specified app.
+///
+/// # Arguments
+///
+/// * `app_name` - A string slice that represents the name of the app.
+/// * `custom_filename_with_extension` - A string slice that represents the name of the custom file with the extension.
+///
+/// # Panics
+///
+/// This function panics if it fails to delete the custom file.
+///
+/// # Examples
+///
+/// ```
+/// use std::path::PathBuf;
+/// use std::fs::{self, File};
+///
+/// fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
+///     /* Function body */
+///     # PathBuf::new()
+/// }
+///
+/// fn clearcustom_test() {
+///     let app_name = "MyApp";
+///     let custom_filename_with_extension = "myfile.txt";
+///
+///     // Create the custom file to be deleted
+///     let file_path = customfile_path(&app_name.to_string(), custom_filename_with_extension.to_string());
+///     File::create(&file_path).unwrap();
+///
+///     // Ensure the custom file exists
+///     assert_eq!(file_path.exists(), true);
+///
+///     // Delete the custom file
+///     clearcustom(&app_name.to_string(), custom_filename_with_extension.to_string());
+///
+///     // Ensure the custom file was deleted
+///     assert_eq!(file_path.exists(), false);
+/// }
+/// ```
 pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>){
     remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))
         .expect("Could not clear preference.");
@@ -199,6 +301,29 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
                     },
                 }
 }
+/// Retrieve the custom data from the specified custom file for the specified app,
+/// or save the default value and return it if the file does not exist.
+/// 
+/// # Arguments
+///
+/// * `app_name` - The name of the application.
+/// * `key` - The key associated with the custom data.
+/// * `defvalue` - The default value to be saved and returned if the file does not exist.
+///
+/// # Returns
+///
+/// A string containing the custom data retrieved from the specified file, or the default
+/// value if the file does not exist.
+///
+/// # Examples
+///
+/// ```
+/// let app_name = "MyApp";
+/// let key = "my_custom_data.txt";
+/// let custom_data = getcustom(app_name, key, "default value");
+/// println!("Custom data: {}", custom_data);
+/// ```
+
 pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
     use io::Read;
     let key =key.into();
@@ -216,6 +341,21 @@ pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,de
                     },
                 }
 }
+/// Retrieves the preference value associated with the specified key for the given app name.
+/// If the preference file does not exist, returns an empty string.
+///
+/// # Arguments
+///
+/// * `app_name` - The name of the application.
+/// * `key` - The key of the preference value.
+///
+/// # Examples
+///
+/// ```
+/// let app_name = "my_app";
+/// let key = "my_preference_key";
+/// let preference_value = getpreferencenodefault(app_name, key);
+/// ```
 pub fn getpreferencenodefault(app_name:impl Into<String>,key:impl Into<String>)->String{
     use io::Read;
     let key =key.into();
@@ -578,6 +718,31 @@ fn config_folder_path(app_name:&String) -> PathBuf {
     // vec![]
 //     list_of_strings
 // }
+/// Returns a vector of tuples containing all the files in the specified app's configuration directory.
+///
+/// # Arguments
+///
+/// * `app_name` - A string slice that holds the name of the app.
+///
+/// # Example
+///
+/// ```
+/// use crate::preference::*;
+///
+/// let files = getall("my_app_name");
+/// println!("{:?}", files);
+/// ```
+///
+/// # Returns
+///
+/// A vector of tuples containing file names and their contents.
+/// ```
+/// vec![
+///     ("file1".to_owned(), "content1".to_owned()),
+///     ("file2".to_owned(), "content2".to_owned()),
+///     ("file3".to_owned(), "content3".to_owned())
+/// ]
+/// ```
 
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     let app_name=app_name.into();
@@ -641,6 +806,29 @@ pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
 #[cfg(test)]
 mod prefstore_test {
     use super::*;
+    
+    #[test]
+    fn test_getall() {
+        savecustom("myapp", "custom1", "value1");
+        savecustom("myapp", "custom2", "value2");
+        let all_custom = getall("myapp");
+        assert_eq!(all_custom.len(), 2);
+        assert!(all_custom.contains(&("custom1".to_string(), "value1".to_string())));
+        assert!(all_custom.contains(&("custom2".to_string(), "value2".to_string())));
+    }
+
+    #[test]
+    fn test_savecustom() {
+        savecustom("myapp", "custom1", "value1");
+        assert_eq!(getcustom("myapp", "custom1", "default"), "value1");
+    }
+    
+    #[test]
+    fn test_clearcustom() {
+        savecustom("myapp", "custom1", "value1");
+        clearcustom("myapp", "custom1");
+        assert_eq!(getcustom("myapp", "custom1", "default"), "default");
+    }
 
     #[test]
     fn test_savepreference() {
