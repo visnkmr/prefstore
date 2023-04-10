@@ -259,7 +259,28 @@ pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: im
     remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))
         .expect("Could not clear preference.");
 }
+pub fn clearall(app_name:impl Into<String>,file_extension:&str){
+    let app_name=app_name.into();
+    // println!("{app_name}");
+    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
+    // println!("{}",gh);
+    // let key =key.into();
+    gh.push_str(&format!("/*.{}",file_extension));
+    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
+    for entry in glob::glob(&gh)
+        .expect("Failed to read glob pattern") {
+        match entry {
 
+            Ok(path) =>{
+                remove_file(path);
+            },
+            Err(e) => {
+                eprintln!("error with glob {:?}", e);
+                
+            },
+        }
+        }
+}
 // #[no_mangle]
 /// Retrieves the preference with the given key for the given app_name. If the preference does not exist, it returns the default value provided.
 ///
@@ -743,7 +764,6 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 ///     ("file3".to_owned(), "content3".to_owned())
 /// ]
 /// ```
-
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     let app_name=app_name.into();
     // println!("{app_name}");
@@ -751,6 +771,56 @@ pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     // println!("{}",gh);
     // let key =key.into();
     gh.push_str("/*.txt");
+    let mut list_of_strings:Vec<(String,String)>=vec![];
+    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
+    for entry in glob::glob(&gh)
+        .expect("Failed to read glob pattern") {
+        match entry {
+
+            Ok(path) =>{
+                let input= match(File::open(&path)){
+                    Ok(mut file) => {
+                        let mut buf = String::new();
+                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        buf
+                        // file
+                    },
+                    Err(_) => {
+                        return vec![]
+                        // savepreference(app_name,&key, &defvalue.to_string());
+                        // defvalue.to_string()
+                    },
+                };
+                // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
+                println!("{:?}",input);
+                // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
+                let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
+
+                // for i in vec_of_string{
+                    list_of_strings.push((file_name.to_owned(),input));
+                // }
+                
+            },
+            Err(e) => {
+                eprintln!("error with glob {:?}", e);
+                
+            },
+        }
+    }
+    
+    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
+    // url2str(j)
+    // get_decoded_string(j);
+    // vec![]
+    list_of_strings
+}
+pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
+    let app_name=app_name.into();
+    // println!("{app_name}");
+    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
+    // println!("{}",gh);
+    // let key =key.into();
+    gh.push_str(&format!("/*.{}",file_extension));
     let mut list_of_strings:Vec<(String,String)>=vec![];
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
     for entry in glob::glob(&gh)
