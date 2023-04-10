@@ -1,6 +1,6 @@
 #![allow(warnings)] 
 
-use std::{fs::{File, create_dir_all, remove_file, read_to_string}, io::{Write,BufReader, self, Read}, path::{PathBuf, Path}, collections::HashMap};
+use std::{fs::{File, create_dir_all, remove_file, read_to_string}, io::{Write,BufReader, self, Read}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
 use dirs;
 // use url::form_urlencoded;
 use std::env::var;
@@ -27,14 +27,7 @@ const MSG_NO_SYSTEM_CONFIG_DIR: &str = "no system config directory detected";
 ///
 /// This function will return an error if it is unable to create the necessary directories or file.
 pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
-    let key=key.into();
-    let app_name=app_name.into();
-    let fname=" #savepreference";
-    create_dir_all(&config_path(&app_name,&key).parent()
-        .expect(&format!("Cannot find path to {fname}")))
-        .expect(&format!("cannot create dirs necessary to {fname}"));
-    write!(File::create(&config_path(&app_name,&key))
-        .expect(&format!("Cannot create {fname}")), "{}", value.to_string());
+    savecustom(app_name, format!("{}.txt",key.into()), value)
 }
 /// Save custom data to a file with the given app name, filename, and value.
 ///
@@ -101,10 +94,10 @@ pub fn appendcustom<T: ToString>(app_name:impl Into<String>,custom_filename_with
 /// assert_eq!(default_name, "mykey.txt");
 /// ```
 fn default_name(filename:String) -> String {
-    format!("{}.txt", filename).to_lowercase()
+    custom_file_name(format!("{}.txt", filename))
 }
 fn custom_file_name(filename:String) -> String {
-    format!("{}", filename).to_lowercase()
+    format!("{}", filename)
 }
 
 /// Returns the path to the configuration file for the given app_name and filename.
@@ -763,7 +756,7 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 /// # Example
 ///
 /// ```
-/// use crate::preference::*;
+/// use prefstore::*;
 ///
 /// let files = getall("my_app_name");
 /// println!("{:?}", files);
@@ -780,54 +773,7 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 /// ]
 /// ```
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
-    let app_name=app_name.into();
-    // println!("{app_name}");
-    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
-    // println!("{}",gh);
-    // let key =key.into();
-    gh.push_str("/*.txt");
-    let mut list_of_strings:Vec<(String,String)>=vec![];
-    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh)
-        .expect("Failed to read glob pattern") {
-        match entry {
-
-            Ok(path) =>{
-                let input= match(File::open(&path)){
-                    Ok(mut file) => {
-                        let mut buf = String::new();
-                        file.read_to_string(&mut buf).expect("Cannot read to string");
-                        buf
-                        // file
-                    },
-                    Err(_) => {
-                        return vec![]
-                        // savepreference(app_name,&key, &defvalue.to_string());
-                        // defvalue.to_string()
-                    },
-                };
-                // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
-                println!("{:?}",input);
-                // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
-                let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
-
-                // for i in vec_of_string{
-                    list_of_strings.push((file_name.to_owned(),input));
-                // }
-                
-            },
-            Err(e) => {
-                eprintln!("error with glob {:?}", e);
-                
-            },
-        }
-    }
-    
-    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-    // url2str(j)
-    // get_decoded_string(j);
-    // vec![]
-    list_of_strings
+    getallcustom(app_name, "txt")
 }
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
 ///
