@@ -15,57 +15,49 @@ Install the crate as a dependency in your app's Cargo.toml file:
 prefstore = "0.5.0"
 ```
 
-## Usage
-
-Import prefstore:
+Then you can use it in your code like this:
 
 ```rust
+// Import prefstore
 use prefstore::*;
-```
 
-Save value to disk.
+fn main() {
+    // Save value to disk using savepreference
+    savepreference("MyApp", "name", "Alice");
 
-```rust
-savepreference("APPNAME",KEY,VALUE);
-savecustom("APPNAME",FILE_NAME_WITH_EXTENSION,VALUE);
-appendcustom("APPNAME",FILE_NAME_WITH_EXTENSION,APPEND_VALUE);
-```
+    // Save value to disk using savecustom
+    savecustom("MyApp", "age.txt", 25);
 
-`APPNAME`: folder name to store to on disk in the config folder.  
-`KEY`: the name of the preference/config, filename with no extension to store to in APPNAME dir.  
-`FILE_NAME_WITH_EXTENSION`: filename with extension to store to in APPNAME dir.  
-`VALUE`: the preference/config value to store, stored in the KEY/FILE_NAME_WITH_EXTENSION.txt file in APPNAME dir. Tested using bool,i32,f64,etc.  
-`APPEND_VALUE`: the value to append, stored in the KEY/FILE_NAME_WITH_EXTENSION.txt file in APPNAME dir. Tested using bool,i32,f64,etc.  
-  
-Load value from disk.  
-  
-```rust
-getpreference("APPNAME",KEY,DEFAULT_VALUE);
-getcustom("APPNAME",FILE_NAME_WITH_EXTENSION,DEFAULT_VALUE);
-getcustomwithnodefault("APPNAME",FILE_NAME_WITH_EXTENSION);
-```
-  
-`APPNAME`: folder name on disk to load from in the config folder.  
-`KEY`: the name of the preference/config, filename to load from in APPNAME dir.  
-`FILE_NAME_WITH_EXTENSION`: filename with extension to load from in APPNAME dir.  
-`DEFAULT_VALUE`: the default preference/config value to return, if the KEY/FILE_NAME_WITH_EXTENSION doesn't exist on disk. Tested using bool,i32,f64,etc.  
-  
-The saved configs are stored at location as defined by [dirs](https://crates.io/crates/dirs/4.0.0) crate's `config_dir`:   
-```
-Linux: /home/$USERNAME/.config/APPNAME
-Win: Drivename:\Users\$USERNAME\AppData\Roaming\APPNAME 
-Mac: /Users/$USERNAME/Library/Application Support\APPNAME
-```
-  
-Delete preference/config file from disk:  
-  
-```rust
-clearpreference("APPNAME",KEY);
-clearcustom("APPNAME",FILE_NAME_WITH_EXTENSION);
-```
-  
-`APPNAME`: folder name to delete from on disk in the config folder.  
-`KEY`: the name of the preference/config file to delete, filename to delete in APPNAME dir.  
-`FILE_NAME_WITH_EXTENSION`: filename with extension to delete in APPNAME dir. 
-  
-The `VALUE` can be any value that implements ToString trait from rustlib. Note as per doc: This trait is automatically implemented for any type which implements the `[Display]` trait. As such, ToString shouldn't be implemented directly: `[Display]` should be implemented instead, and you get the ToString implementation for free. 	
+    // Save value to disk using appendcustom
+    appendcustom("MyApp", "hobbies.txt", "reading");
+
+    // Load value from disk using getpreference
+    let name = getpreference("MyApp", "name", "Bob");
+    println!("Name: {}", name);
+
+    // Load value from disk using getcustom
+    let age = getcustom("MyApp", "age.txt", 0);
+    println!("Age: {}", age);
+
+    // Load value from disk using getcustomwithnodefault
+    let hobbies = getcustomwithnodefault("MyApp", "hobbies.txt");
+    println!("Hobbies: {}", hobbies);
+
+    // Delete preference file from disk using clearpreference
+    clearpreference("MyApp", "name");
+
+    // Delete preference file from disk using clearcustom
+    clearcustom("MyApp", "age.txt");
+}
+```  
+## Features
+
+- Supports any type that implements `[Display]` for values
+- Stores each preference in separate file, ensuring quick access and minimum disk read/write operations.
+- Provides methods for setting, getting, removing preferebces.
+- Provides methods for loading and saving preference from and to a file.
+- Provides methods for clearing.
+
+## License
+
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) file for more details.
