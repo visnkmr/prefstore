@@ -9,7 +9,7 @@
 
 [package]
 name = "prefstore"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 author = ["visnkmr"]
 description = "A rust crate to Easily store and retrieve preferences in rust."

@@ -12,7 +12,7 @@ Install the crate as a dependency in your app's Cargo.toml file:
 
 ```toml
 [dependencies]
-prefstore = "0.5.0"
+prefstore = "0.6.0"
 ```
 
 Then you can use it in your code like this:
