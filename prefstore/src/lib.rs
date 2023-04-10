@@ -259,27 +259,42 @@ pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: im
     remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))
         .expect("Could not clear preference.");
 }
-pub fn clearall(app_name:impl Into<String>,file_extension:&str){
-    let app_name=app_name.into();
-    // println!("{app_name}");
-    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
-    // println!("{}",gh);
-    // let key =key.into();
-    gh.push_str(&format!("/*.{}",file_extension));
-    // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh)
-        .expect("Failed to read glob pattern") {
-        match entry {
+/// Clears all files with the given extension in the configuration folder for the given application.
+///
+/// # Arguments
+///
+/// * `app_name` - The name of the application whose files should be cleared.
+/// * `file_extension` - The extension of the files to be cleared.
+///
+/// # Examples
+///
+/// ```
+/// # use prefstore::clearall;
+/// clearall("myapp", "txt");
+/// ```
+pub fn clearall(app_name: impl Into<String>, file_extension: &str) {
+    let app_name = app_name.into();
 
-            Ok(path) =>{
+    // Construct the path to the configuration folder for the application.
+    let mut gh = config_folder_path(&app_name)
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    // Append the glob pattern to match files with the given extension.
+    gh.push_str(&format!("/*.{}", file_extension));
+
+    // Iterate over all files that match the glob pattern and attempt to remove them.
+    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => {
                 remove_file(path);
-            },
+            }
             Err(e) => {
                 eprintln!("error with glob {:?}", e);
-                
-            },
+            }
         }
-        }
+    }
 }
 // #[no_mangle]
 /// Retrieves the preference with the given key for the given app_name. If the preference does not exist, it returns the default value provided.
@@ -814,6 +829,26 @@ pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     // vec![]
     list_of_strings
 }
+/// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
+///
+/// # Arguments
+///
+/// * `app_name` - The name of the application whose files should be retrieved.
+/// * `file_extension` - The extension of the files to be retrieved.
+///
+/// # Returns
+///
+/// A vector of tuples representing file names and their contents.
+///
+/// # Examples
+///
+/// ```
+/// # use prefstore::getallcustom;
+/// let files = getallcustom("myapp", "txt");
+/// for (name, contents) in files {
+///     println!("{}: {}", name, contents);
+/// }
+/// ```
 pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
     let app_name=app_name.into();
     // println!("{app_name}");
