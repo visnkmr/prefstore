@@ -12,7 +12,7 @@ Install the crate as a dependency in your app's Cargo.toml file:
 
 ```toml
 [dependencies]
-prefstore = "0.4.0"
+prefstore = "0.5.0"
 ```
 
 ## Usage
@@ -43,6 +43,7 @@ Load value from disk.
 getpreference("APPNAME",KEY,DEFAULT_VALUE);
 getcustom("APPNAME",FILE_NAME_WITH_EXTENSION,DEFAULT_VALUE);
 getcustomwithnodefault("APPNAME",FILE_NAME_WITH_EXTENSION);
+getall("APPNAME"); //returns content of all files with .txt extension as vec<filename,content>
 ```
   
 `APPNAME`: folder name on disk to load from in the config folder.  
