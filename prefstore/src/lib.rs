@@ -1,6 +1,6 @@
 #![allow(warnings)] 
 
-use std::{fs::{File, create_dir_all, remove_file, read_to_string}, io::{Write,BufReader, self, Read}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
+use std::{fs::{File, create_dir_all, remove_file, read_to_string, OpenOptions}, io::{Write,BufReader, self, Read}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
 use dirs;
 // use url::form_urlencoded;
 use std::env::var;
@@ -55,6 +55,22 @@ pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_e
         .expect(&format!("cannot create dirs necessary to {fname}"));
     write!(File::create(&customfile_path(&app_name,&key))
         .expect("Cannot create file."), "{}", value.to_string());
+        
+}
+pub fn initcustomfile<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T)->std::io::Result<()>{
+    let key=custom_filename_with_extension.into();
+    let app_name=app_name.into();
+    let fname=" #initcustom";
+    
+    create_dir_all(&customfile_path(&app_name,&key).parent()
+        .expect(&format!("Cannot find path to {fname}")))
+        .expect(&format!("cannot create dirs necessary to {fname}"));
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&customfile_path(&app_name,&key))?;
+    file.write_all(format!("{}", value.to_string()).as_bytes());
+        Ok(())
 }
 /// Appends a value to a custom file for the given application.
 ///
