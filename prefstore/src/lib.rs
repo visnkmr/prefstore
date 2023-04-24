@@ -330,21 +330,22 @@ pub fn clearall(app_name: impl Into<String>, file_extension: &str) {
 ///
 /// This function will return an error if it is unable to read the preference file or create a new preference file with the default value.
 pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
-    use io::Read;
-    let key =key.into();
-    let app_name =app_name.into();
-				match(File::open(&config_path(&app_name,&key))){
-                    Ok(mut file) => {
-                        let mut buf = String::new();
-                        file.read_to_string(&mut buf)
-                            .expect("Cannot read to string");
-                        buf
-                    },
-                    Err(_) => {
-                        savepreference(app_name,&key, &defvalue.to_string());
-                        defvalue.to_string()
-                    },
-                }
+    getcustom(app_name, format!("{}.txt", key.into()), defvalue)
+    // use io::Read;
+    // let key =key.into();
+    // let app_name =app_name.into();
+	// 			match(File::open(&config_path(&app_name,&key))){
+    //                 Ok(mut file) => {
+    //                     let mut buf = String::new();
+    //                     file.read_to_string(&mut buf)
+    //                         .expect("Cannot read to string");
+    //                     buf
+    //                 },
+    //                 Err(_) => {
+    //                     savepreference(app_name,&key, &defvalue.to_string());
+    //                     defvalue.to_string()
+    //                 },
+    //             }
 }
 /// Retrieve the custom data from the specified custom file for the specified app,
 /// or save the default value and return it if the file does not exist.
