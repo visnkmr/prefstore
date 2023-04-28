@@ -792,7 +792,7 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     getallcustom(app_name, "txt")
 }
-pub fn save_last_n_to_file<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,n:i8){
+pub fn save_last_n_to_file(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,n:i8){
     // getcustom(app_name, key, defvalue);
     let filename=custom_filename_with_extension.into();
     let stringtos=value.into();
