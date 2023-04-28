@@ -1,6 +1,6 @@
 #![allow(warnings)] 
 
-use std::{fs::{File, create_dir_all, remove_file, read_to_string,OpenOptions}, io::{Write,BufReader, self, Read, Error}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
+use std::{fs::{File, create_dir_all, remove_file, read_to_string,OpenOptions}, io::{Write,BufReader, self, Read, Error, BufRead}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
 use dirs;
 // use url::form_urlencoded;
 use std::env::var;
@@ -91,6 +91,16 @@ pub fn appendcustom<T: ToString>(app_name:impl Into<String>,custom_filename_with
         .expect(&format!("Cannot find path to {fname}")))
         .expect(&format!("cannot create dirs necessary to {fname}"));
     write!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key))
+        .expect("Cannot create file."), "{}", value.to_string());
+}
+pub fn appendcustomnewline<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
+    let key=custom_filename_with_extension.into();
+    let fname=" #appendcustomnewline";
+    let app_name=app_name.into();
+    create_dir_all(&customfile_path(&app_name,&key).parent()
+        .expect(&format!("Cannot find path to {fname}")))
+        .expect(&format!("cannot create dirs necessary to {fname}"));
+    writeln!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key))
         .expect("Cannot create file."), "{}", value.to_string());
 }
 
@@ -265,8 +275,15 @@ pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
 /// }
 /// ```
 pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>){
-    remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))
-        .expect("Could not clear preference.");
+    match(remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))){
+        Ok(_) => {
+            
+        },
+        Err(_) => {
+            
+        },
+    };
+        // .expect("Could not clear preference.");
 }
 /// Clears all files with the given extension in the configuration folder for the given application.
 ///
@@ -371,7 +388,6 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
 /// ```
 
 pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
-    use io::Read;
     let key =key.into();
     let app_name =app_name.into();
     if(!key.is_empty()){
@@ -394,6 +410,32 @@ pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,de
     }
 				
 }
+fn opencustomperlinetovec(app_name:impl Into<String>,key:impl Into<String>) -> Vec<String> {
+    let key =key.into();
+    let app_name =app_name.into();
+    // Create an empty vector to store the lines
+    let mut lines = Vec::new();
+    // Open the file and create a buffered reader
+    match(File::open(&customfile_path(&app_name,&key))){
+        Ok(mut file) => {
+            let reader = BufReader::new(file);
+            // Iterate over the lines of the reader
+            for line in reader.lines() {
+                // Get the line as a string and push it to the vector
+                let line = line.expect("Could not read line");
+                lines.push(line);
+            }
+        },
+        Err(_) => {
+            
+        },
+    }
+    // let file = File::open(&customfile_path(&app_name,&key)).expect("Could not open file");
+    
+    // Return the vector of lines
+    lines
+}
+
 /// Retrieves the preference value associated with the specified key for the given app name.
 /// If the preference file does not exist, returns an empty string.
 ///
@@ -799,12 +841,12 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     getallcustom(app_name, "txt")
 }
-pub fn savebuffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,n:i8){
+pub fn savebuffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,buffersize:i8){
     // getcustom(app_name, key, defvalue);
     let app_name=app_name.into();
     let filename=custom_filename_with_extension.into();
     let stringtos=value.into();
-    let mut vectos=saveStringtonlinesbuffer(&app_name,stringtos,n,&filename);
+    let mut vectos=saveStringtobuffer(&app_name,stringtos,buffersize,&filename);
     // vectos.reverse();
     saveVecOfStrings(&app_name,vectos, &filename);
 }
@@ -814,63 +856,70 @@ fn testsave(){
     savebuffer("prefstore", "last.save", "", 3);
     savebuffer("prefstore", "last.save", "yu3", 3);
     savebuffer("prefstore", "last.save", "yu4", 3);
-    match(getbuffer("prefstore", "last.save")){
-        Ok(g) => println!("{:?}",g.last()),
-        Err(_) => print!(""),
-    };
+    savebuffer("prefstore", "last.save", "yu5", 3);
+    savebuffer("prefstore", "last.save", "yu6", 3);
+    println!("{:?}",getbuffer("prefstore", "last.save"));
+    println!("{:?}",get_last_from_buffer("prefstore", "last.save"));
+    // match(getbuffer("prefstore", "last.save")){
+    //     Ok(g) => println!("{:?}",g.last()),
+    //     Err(_) => print!(""),
+    // };
 }
 pub fn get_last_from_buffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>)->String{
-    match(getbuffer(&app_name.into(), &custom_filename_with_extension.into())){
-        Ok(g) => 
-        if(!g.is_empty()){
-            g.last().unwrap_or(&"".to_string()).to_string()
-        }
-        else{
-            String::new()
-        },
-        Err(_) => String::new(),
-    }
+    // match(getbuffer(&app_name.into(), &custom_filename_with_extension.into())){
+    //     Ok(g) => 
+    //     if(!g.is_empty()){
+    //         g.last().unwrap_or(&"".to_string()).to_string()
+    //     }
+    //     else{
+    //         String::new()
+    //     },
+    //     Err(_) => String::new(),
+    // }
+    getbuffer(&app_name.into(), &custom_filename_with_extension.into()).pop().unwrap_or(String::new()).to_string()
 }
 // Assume the data structure is a vector of strings
-fn saveStringtonlinesbuffer(app_name:&str,string: String,n:i8, filename: &str)->Vec<String> {
-    let mut ds=match(getbuffer(app_name,&filename)){
-        Ok(mut g) => {
-            // g.reverse();
-            g
-        }   ,
-        Err(_) => {
-            println!("file not found");
-            Vec::new()
-        },
-    };
+fn saveStringtobuffer(app_name:&str,string: String,n:i8, filename: &str)->Vec<String> {
+//     let mut ds=match(getbuffer(app_name,&filename)){
+//         Ok(mut g) => {
+//             // g.reverse();
+//             g
+//         }   ,
+//         Err(_) => {
+//             println!("file not found");
+//             Vec::new()
+//         },
+//     };
+    let mut ds=getbuffer(app_name,filename);
     // Push the new string to the end of the vector
     ds.push(string.clone());
     println!("{}",string);
     println!("{}/{}--------{:?}",ds.len(),n as usize,ds);
     // ds.reverse();
-    let mut vs=Vec::new();
-    ds.reverse();
+    // let mut vs=Vec::new();
+    // ds.reverse();
     // If the vector has more than n elements, remove the oldest one from the front
-    for (index,indi) in ds.iter().enumerate(){
+    // for (index,indi) in ds.iter().enumerate(){
        
-        if(index as i8>n-1){
-            break;
-        }
-        vs.push(indi.to_string());
-    }
-    // if ds.len() > n as usize {
-    //     println!("removing");
-    //     ds.remove(0);
+    //     if(index as i8>n-1){
+    //         break;
+    //     }
+    //     vs.push(indi.to_string());
     // }
-    // ds
-    vs.reverse();
-    vs
+    if ds.len() > n as usize{
+        println!("removing");
+        ds.remove(0);
+    }
+    ds
+    // vs.reverse();
+    // vs
 }
 fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Result<(), Error> {
     // Open the file for writing, creating it if it doesn't exist
-    let mut file = getcustom(app_name, file_name, "");
+    let mut file = opencustomperlinetovec(app_name, file_name);
     clearcustom(app_name, file_name);
-    savecustom(app_name, file_name, "");
+    initcustomfile(app_name, file_name, "");
+    // savecustom(app_name, file_name, "");
     // let mut vectosave=vec![];
     // Iterate over the strings in the vector
     for string in strings {
@@ -880,7 +929,7 @@ fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Resu
         // vectosave.push(string);
         if(string!=""){
 
-            appendcustom(app_name, file_name, "\n".to_string()+string.as_str());
+            appendcustomnewline(app_name, file_name, string);
         }
     }
     // savecustom(app_name, file_name, vectosave);
@@ -888,23 +937,26 @@ fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Resu
     Ok(())
 }
 // Assume the file name is a string slice
-fn getbuffer(app_name:&str,file_name: &str) -> Result<Vec<String>, Error> {
-    // Open the file for reading
-    let mut contents = getcustom(app_name, file_name, "");
-    let mut vecsend=Vec::new();
-    // Split the string by newline characters and collect into a vector of strings
-    let lines: Vec<String> = contents.split('\n').map(|s| s.to_string()).collect();
-    for string in lines {
-        // Replace any \n characters with empty strings
-        // let string = string.replace("<prefstorebr>", "\n");
-        // Write the string to the file, followed by a new line
-        if(string!=""){
-
-            vecsend.push(string);
-        }
-    }
-    // Return the vector as Ok if no errors occurred
-    Ok(vecsend)
+fn getbuffer(app_name:&str,file_name: &str) -> Vec<String> {
+    // // Open the file for reading
+    // let mut contents = getcustom(app_name, file_name, "");
+    // let mut vecsend=Vec::new();
+    // // Split the string by newline characters and collect into a vector of strings
+    // if(!contents.is_empty()){
+    //     let lines: Vec<String> = contents.split('\n').map(|s| s.to_string()).collect();
+    //     for string in lines {
+    //         // Replace any \n characters with empty strings
+    //         // let string = string.replace("<prefstorebr>", "\n");
+    //         // Write the string to the file, followed by a new line
+    //         if(string!=""){
+    
+    //             vecsend.push(string);
+    //         }
+    //     }
+    // }
+    // // Return the vector as Ok if no errors occurred
+    // Ok(vecsend)
+    opencustomperlinetovec(app_name, file_name)
 }
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
 ///
