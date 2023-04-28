@@ -814,7 +814,13 @@ fn testsave(){
 }
 pub fn get_last_from_buffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>)->String{
     match(getbuffer(&app_name.into(), &custom_filename_with_extension.into())){
-        Ok(g) => g.last().unwrap().to_string(),
+        Ok(g) => 
+        if(!g.is_empty()){
+            g.last().unwrap_or(&"".to_string()).to_string()
+        }
+        else{
+            "".to_string()
+        },
         Err(_) => "".to_string(),
     }
 }
