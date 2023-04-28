@@ -792,7 +792,7 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     getallcustom(app_name, "txt")
 }
-pub fn save_last_n_to_file(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,n:i8){
+pub fn savebuffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,n:i8){
     // getcustom(app_name, key, defvalue);
     let app_name=app_name.into();
     let filename=custom_filename_with_extension.into();
@@ -803,18 +803,24 @@ pub fn save_last_n_to_file(app_name:impl Into<String>,custom_filename_with_exten
 }
 #[test]
 fn testsave(){
-    save_last_n_to_file("prefstore", "last.save", "yu", 3);
-    save_last_n_to_file("prefstore", "last.save", "", 3);
-    save_last_n_to_file("prefstore", "last.save", "yu3", 3);
-    save_last_n_to_file("prefstore", "last.save", "yu4", 3);
-    match(readFileToVec("prefstore", "last.save")){
+    savebuffer("prefstore", "last.save", "yu", 3);
+    savebuffer("prefstore", "last.save", "", 3);
+    savebuffer("prefstore", "last.save", "yu3", 3);
+    savebuffer("prefstore", "last.save", "yu4", 3);
+    match(getbuffer("prefstore", "last.save")){
         Ok(g) => println!("{:?}",g.last()),
         Err(_) => print!(""),
     };
 }
+pub fn get_last_from_buffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>)->String{
+    match(getbuffer(&app_name.into(), &custom_filename_with_extension.into())){
+        Ok(g) => g.last().unwrap().to_string(),
+        Err(_) => "".to_string(),
+    }
+}
 // Assume the data structure is a vector of strings
 fn saveStringtonlinesbuffer(app_name:&str,string: String,n:i8, filename: &str)->Vec<String> {
-    let mut ds=match(readFileToVec(app_name,&filename)){
+    let mut ds=match(getbuffer(app_name,&filename)){
         Ok(mut g) => {
             // g.reverse();
             g
@@ -869,7 +875,7 @@ fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Resu
     Ok(())
 }
 // Assume the file name is a string slice
-fn readFileToVec(app_name:&str,file_name: &str) -> Result<Vec<String>, Error> {
+fn getbuffer(app_name:&str,file_name: &str) -> Result<Vec<String>, Error> {
     // Open the file for reading
     let mut contents = getcustom(app_name, file_name, "");
     let mut vecsend=Vec::new();
