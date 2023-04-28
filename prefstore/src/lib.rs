@@ -801,7 +801,10 @@ pub fn save_last_n_to_file(app_name:impl Into<String>,custom_filename_with_exten
 }
 // Assume the data structure is a vector of strings
 fn saveStringtonlinesbuffer(string: String,n:i8, filename: &str)->Vec<String> {
-    let mut ds=readFileToVec(&filename).unwrap();
+    let mut ds=match(readFileToVec(&filename)){
+        Ok(g) => g,
+        Err(_) => vec![],
+    };
     // Push the new string to the end of the vector
     ds.push(string);
     // If the vector has more than 5 elements, remove the oldest one from the front
