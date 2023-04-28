@@ -866,96 +866,38 @@ fn testsave(){
     // };
 }
 pub fn get_last_from_buffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>)->String{
-    // match(getbuffer(&app_name.into(), &custom_filename_with_extension.into())){
-    //     Ok(g) => 
-    //     if(!g.is_empty()){
-    //         g.last().unwrap_or(&"".to_string()).to_string()
-    //     }
-    //     else{
-    //         String::new()
-    //     },
-    //     Err(_) => String::new(),
-    // }
     getbuffer(&app_name.into(), &custom_filename_with_extension.into()).pop().unwrap_or(String::new()).to_string()
 }
 // Assume the data structure is a vector of strings
 fn saveStringtobuffer(app_name:&str,string: String,n:i8, filename: &str)->Vec<String> {
-//     let mut ds=match(getbuffer(app_name,&filename)){
-//         Ok(mut g) => {
-//             // g.reverse();
-//             g
-//         }   ,
-//         Err(_) => {
-//             println!("file not found");
-//             Vec::new()
-//         },
-//     };
     let mut ds=getbuffer(app_name,filename);
     // Push the new string to the end of the vector
     ds.push(string.clone());
     println!("{}",string);
     println!("{}/{}--------{:?}",ds.len(),n as usize,ds);
-    // ds.reverse();
-    // let mut vs=Vec::new();
-    // ds.reverse();
-    // If the vector has more than n elements, remove the oldest one from the front
-    // for (index,indi) in ds.iter().enumerate(){
-       
-    //     if(index as i8>n-1){
-    //         break;
-    //     }
-    //     vs.push(indi.to_string());
-    // }
     if ds.len() > n as usize{
         println!("removing");
         ds.remove(0);
     }
     ds
-    // vs.reverse();
-    // vs
 }
 fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Result<(), Error> {
     // Open the file for writing, creating it if it doesn't exist
     let mut file = opencustomperlinetovec(app_name, file_name);
     clearcustom(app_name, file_name);
     initcustomfile(app_name, file_name, "");
-    // savecustom(app_name, file_name, "");
-    // let mut vectosave=vec![];
     // Iterate over the strings in the vector
     for string in strings {
-        // Replace any \n characters with empty strings
-        // let string = string.replace("\n", "<prefstorebr>");
-        // Write the string to the file, followed by a new line
-        // vectosave.push(string);
         if(string!=""){
 
             appendcustomnewline(app_name, file_name, string);
         }
     }
-    // savecustom(app_name, file_name, vectosave);
     // Return Ok if no errors occurred
     Ok(())
 }
 // Assume the file name is a string slice
 fn getbuffer(app_name:&str,file_name: &str) -> Vec<String> {
-    // // Open the file for reading
-    // let mut contents = getcustom(app_name, file_name, "");
-    // let mut vecsend=Vec::new();
-    // // Split the string by newline characters and collect into a vector of strings
-    // if(!contents.is_empty()){
-    //     let lines: Vec<String> = contents.split('\n').map(|s| s.to_string()).collect();
-    //     for string in lines {
-    //         // Replace any \n characters with empty strings
-    //         // let string = string.replace("<prefstorebr>", "\n");
-    //         // Write the string to the file, followed by a new line
-    //         if(string!=""){
-    
-    //             vecsend.push(string);
-    //         }
-    //     }
-    // }
-    // // Return the vector as Ok if no errors occurred
-    // Ok(vecsend)
     opencustomperlinetovec(app_name, file_name)
 }
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
