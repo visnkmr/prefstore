@@ -897,7 +897,7 @@ fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Resu
     Ok(())
 }
 // Assume the file name is a string slice
-fn getbuffer(app_name:&str,file_name: &str) -> Vec<String> {
+pub fn getbuffer(app_name:&str,file_name: &str) -> Vec<String> {
     opencustomperlinetovec(app_name, file_name)
 }
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
