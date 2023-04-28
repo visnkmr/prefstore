@@ -374,18 +374,25 @@ pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,de
     use io::Read;
     let key =key.into();
     let app_name =app_name.into();
-				match(File::open(&customfile_path(&app_name,&key))){
-                    Ok(mut file) => {
-                        let mut buf = String::new();
-                        file.read_to_string(&mut buf)
-                            .expect("Cannot read to string");
-                        buf
-                    },
-                    Err(_) => {
-                        savecustom(app_name,&key, &defvalue.to_string());
-                        defvalue.to_string()
-                    },
-                }
+    if(!key.is_empty()){
+        match(File::open(&customfile_path(&app_name,&key))){
+                            Ok(mut file) => {
+                                let mut buf = String::new();
+
+                                file.read_to_string(&mut buf)
+                                    .expect("Cannot read to string");
+                                buf
+                            },
+                            Err(_) => {
+                                savecustom(app_name,&key, &defvalue.to_string());
+                                defvalue.to_string()
+                            },
+                        }
+    }
+    else{
+        String::new()
+    }
+				
 }
 /// Retrieves the preference value associated with the specified key for the given app name.
 /// If the preference file does not exist, returns an empty string.
@@ -819,9 +826,9 @@ pub fn get_last_from_buffer(app_name:impl Into<String>,custom_filename_with_exte
             g.last().unwrap_or(&"".to_string()).to_string()
         }
         else{
-            "".to_string()
+            String::new()
         },
-        Err(_) => "".to_string(),
+        Err(_) => String::new(),
     }
 }
 // Assume the data structure is a vector of strings
@@ -922,7 +929,7 @@ fn getbuffer(app_name:&str,file_name: &str) -> Result<Vec<String>, Error> {
 pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
     let app_name=app_name.into();
     // println!("{app_name}");
-    let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
+    let mut gh=config_folder_path(&app_name).to_str().expect("could not find config folder path").to_string();
     // println!("{}",gh);
     // let key =key.into();
     gh.push_str(&format!("/*.{}",file_extension));
@@ -949,7 +956,11 @@ pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String
                 // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
                 println!("{:?}",input);
                 // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
-                let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
+                let file_name =&path.file_stem()
+                .expect("no file name found")
+                .to_str()
+                .expect("could not convert file name to str")
+                .to_string();
 
                 // for i in vec_of_string{
                     list_of_strings.push((file_name.to_owned(),input));
