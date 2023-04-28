@@ -1,6 +1,6 @@
 #![allow(warnings)] 
 
-use std::{fs::{File, create_dir_all, remove_file, read_to_string, OpenOptions}, io::{Write,BufReader, self, Read}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
+use std::{fs::{File, create_dir_all, remove_file, read_to_string, OpenOptions, self}, io::{Write,BufReader, self, Read, Error}, path::{PathBuf, Path}, collections::HashMap, fmt::format};
 use dirs;
 // use url::form_urlencoded;
 use std::env::var;
@@ -791,6 +791,53 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 /// ```
 pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
     getallcustom(app_name, "txt")
+}
+pub fn save_last_n_to_file<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,n:i8){
+    // getcustom(app_name, key, defvalue);
+    let filename=custom_filename_with_extension.into();
+    let stringtos=value.into();
+    let vectos=saveStringtonlinesbuffer(stringtos, n,&filename);
+    saveVecOfStrings(vectos, &filename);
+}
+// Assume the data structure is a vector of strings
+fn saveStringtonlinesbuffer(string: String,n:i8, filename: &str)->Vec<String> {
+    let mut ds=readFileToVec(&filename).unwrap();
+    // Push the new string to the end of the vector
+    ds.push(string);
+    // If the vector has more than 5 elements, remove the oldest one from the front
+    if ds.len() > n as usize {
+        ds.remove(0);
+    }
+    ds
+}
+fn saveVecOfStrings(strings: Vec<String>, file_name: &str) -> Result<(), Error> {
+    // Open the file for writing, creating it if it doesn't exist
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(file_name)?;
+    // Iterate over the strings in the vector
+    for string in strings {
+        // Replace any \n characters with empty strings
+        let string = string.replace("\n", "");
+        // Write the string to the file, followed by a new line
+        writeln!(file, "{}", string)?;
+    }
+    // Return Ok if no errors occurred
+    Ok(())
+}
+// Assume the file name is a string slice
+fn readFileToVec(file_name: &str) -> Result<Vec<String>, Error> {
+    // Open the file for reading
+    let mut file = fs::File::open(file_name)?;
+    // Create a string to hold the file contents
+    let mut contents = String::new();
+    // Read the entire file into the string
+    file.read_to_string(&mut contents)?;
+    // Split the string by newline characters and collect into a vector of strings
+    let lines: Vec<String> = contents.split('\n').map(|s| s.to_string()).collect();
+    // Return the vector as Ok if no errors occurred
+    Ok(lines)
 }
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
 ///
