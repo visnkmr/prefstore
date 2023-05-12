@@ -57,21 +57,32 @@ pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_e
         .expect("Cannot create file."), "{}", value.to_string());
         
 }
-pub fn initcustomfile<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T)->std::io::Result<()>{
-    let key=custom_filename_with_extension.into();
-    let app_name=app_name.into();
-    let fname=" #initcustom";
+/// Initializes the file with the given app name and key, with the given value.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `custom_filename_with_extension`: The custom filename with extension.
+/// * `value`: The value to initialize the file with.
+///
+/// # Returns
+///
+/// A `Result` with an `Ok` value if the operation was successful, or an `Err` value
+/// containing an error message if the operation failed.
+pub fn initcustomfile<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) -> std::io::Result<()> {
+    let key = custom_filename_with_extension.into();
+    let app_name = app_name.into();
+    let fname = "#initcustom";
     
-    create_dir_all(&customfile_path(&app_name,&key).parent()
-        .expect(&format!("Cannot find path to {fname}")))
-        .expect(&format!("cannot create dirs necessary to {fname}"));
+    create_dir_all(&customfile_path(&app_name, &key).parent().expect(&format!("Cannot find path to {}", fname))).expect(&format!("cannot create dirs necessary to {}", fname));
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
-        .open(&customfile_path(&app_name,&key))?;
+        .open(&customfile_path(&app_name, &key))?;
     file.write_all(format!("{}", value.to_string()).as_bytes());
         Ok(())
 }
+
 /// Appends a value to a custom file for the given application.
 ///
 /// # Arguments
@@ -83,26 +94,36 @@ pub fn initcustomfile<T: ToString>(app_name:impl Into<String>,custom_filename_wi
 /// # Example
 ///
 /// ```rust
-pub fn appendcustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
-    let key=custom_filename_with_extension.into();
-    let fname=" #appendcustom";
-    let app_name=app_name.into();
-    create_dir_all(&customfile_path(&app_name,&key).parent()
-        .expect(&format!("Cannot find path to {fname}")))
-        .expect(&format!("cannot create dirs necessary to {fname}"));
-    write!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key))
-        .expect("Cannot create file."), "{}", value.to_string());
+/// Appends the given value to the file with the given app name and key.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `custom_filename_with_extension`: The custom filename with extension.
+/// * `value`: The value to append.
+pub fn appendcustom<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) {
+    let key = custom_filename_with_extension.into();
+    let fname = "#appendcustom";
+    let app_name = app_name.into();
+    create_dir_all(&customfile_path(&app_name, &key).parent().expect(&format!("Cannot find path to {}", fname))).expect(&format!("cannot create dirs necessary to {}", fname));
+    write!(File::options().create(true).append(true).open(&customfile_path(&app_name, &key)).expect("Cannot create file."), "{}", value.to_string());
 }
-pub fn appendcustomnewline<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
-    let key=custom_filename_with_extension.into();
-    let fname=" #appendcustomnewline";
-    let app_name=app_name.into();
-    create_dir_all(&customfile_path(&app_name,&key).parent()
-        .expect(&format!("Cannot find path to {fname}")))
-        .expect(&format!("cannot create dirs necessary to {fname}"));
-    writeln!(File::options().create(true).append(true).open(&customfile_path(&app_name,&key))
-        .expect("Cannot create file."), "{}", value.to_string());
+
+/// Appends the given value to the file with the given app name and key, followed by a newline character.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `custom_filename_with_extension`: The custom filename with extension.
+/// * `value`: The value to append.
+pub fn appendcustomnewline<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) {
+    let key = custom_filename_with_extension.into();
+    let fname = "#appendcustomnewline";
+    let app_name = app_name.into();
+    create_dir_all(&customfile_path(&app_name, &key).parent().expect(&format!("Cannot find path to {}", fname))).expect(&format!("cannot create dirs necessary to {}", fname));
+    writeln!(File::options().create(true).append(true).open(&customfile_path(&app_name, &key)).expect("Cannot create file."), "{}", value.to_string());
 }
+
 
 /// Returns a default name for a preference file.
 ///
@@ -348,21 +369,6 @@ pub fn clearall(app_name: impl Into<String>, file_extension: &str) {
 /// This function will return an error if it is unable to read the preference file or create a new preference file with the default value.
 pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
     getcustom(app_name, format!("{}.txt", key.into()), defvalue)
-    // use io::Read;
-    // let key =key.into();
-    // let app_name =app_name.into();
-	// 			match(File::open(&config_path(&app_name,&key))){
-    //                 Ok(mut file) => {
-    //                     let mut buf = String::new();
-    //                     file.read_to_string(&mut buf)
-    //                         .expect("Cannot read to string");
-    //                     buf
-    //                 },
-    //                 Err(_) => {
-    //                     savepreference(app_name,&key, &defvalue.to_string());
-    //                     defvalue.to_string()
-    //                 },
-    //             }
 }
 /// Retrieve the custom data from the specified custom file for the specified app,
 /// or save the default value and return it if the file does not exist.
@@ -410,13 +416,23 @@ pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,de
     }
 				
 }
-fn opencustomperlinetovec(app_name:impl Into<String>,key:impl Into<String>) -> Vec<String> {
-    let key =key.into();
-    let app_name =app_name.into();
+/// Opens the file with the given app name and key and reads the lines into a vector.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `key`: The key of the file.
+///
+/// # Returns
+///
+/// A vector of strings containing the lines of the file.
+pub fn opencustomperlinetovec(app_name: impl Into<String>, key: impl Into<String>) -> Vec<String> {
+    let key = key.into();
+    let app_name = app_name.into();
     // Create an empty vector to store the lines
     let mut lines = Vec::new();
     // Open the file and create a buffered reader
-    match(File::open(&customfile_path(&app_name,&key))){
+    match File::open(&customfile_path(&app_name, &key)) {
         Ok(mut file) => {
             let reader = BufReader::new(file);
             // Iterate over the lines of the reader
@@ -427,14 +443,13 @@ fn opencustomperlinetovec(app_name:impl Into<String>,key:impl Into<String>) -> V
             }
         },
         Err(_) => {
-            
+            // Do nothing
         },
     }
-    // let file = File::open(&customfile_path(&app_name,&key)).expect("Could not open file");
-    
     // Return the vector of lines
     lines
 }
+
 
 /// Retrieves the preference value associated with the specified key for the given app name.
 /// If the preference file does not exist, returns an empty string.
@@ -559,260 +574,26 @@ impl ems<String> for String{
         self.parse::<f64>().unwrap()
     }
 } 
-// fn getencodedstring(value:String)->String{
-//     form_urlencoded::Serializer::new(String::new())
-//     .append_key_only(&value)
-//     .finish()
-// }
-// #[test]
-// fn encode_and_decode_str_for_list(){
-//     println!("{}",getencodedstring(r#"complete the tasl &=&=ta jadmm"#.to_string()));
-//     // let encoded = "complete+the+tasl+%26%3D%26%3Dta+jadmm";
-//     // let decoded: String = form_urlencoded::parse(encoded.as_bytes())
-//     //     .map(|(k, v)| format!("{}={}", k, v))
-//     //     .collect::<Vec<String>>()
-//     //     .join("&");
-//     // println!("{}", decoded);
-//     println!("{}",getdecoded(r#"complete+the+tasl+%26%3D%26%3Dta+jadmm"#));
-// }
-// fn getdecoded(input:&str)->String{
-//     (form_urlencoded::parse(input.as_bytes())
-//         .map(|(k, _)| format!("{}", k))
-//         .collect::<String>())
-        
-// }
-// fn get_decoded_string(j:Vec<String>)->Vec<String>{
-//     // for a in j{
-//         let encoded = form_urlencoded::parse(&a.as_bytes())
-//         .map(|(_, v)| {
-//             // todo!();
-            
-//             format!("{}", v)
-//         })
-//         .collect::<Vec<String>>();   
-//     // }
-//     vec![]
-// }
-// pub fn addlistasjson<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:Vec<T>)
-// {
-//     let app_name:String=app_name.into();
-//     let key:String=key.into();
-//     let mut listofvecs:Vec<String>=
-//     // match(getfromlist(app_name.clone(), key.clone())){
-//     //     Ok(alreadycontents) => alreadycontents,
-//     //     Err(_) => 
-//         Vec::new();
-//     //     ,
-//     // };
-//     // let vecofwhat=value.to_string().as_bytes();
-//     // let encoded: String = getencodedstring(value.to_string());
-//     // let encoded: String = (value.to_string());//getencodedstring
-//     // let utf8_bytes_list: Vec<&[u8]> = value.to_string().chars().into_iter().map(|s| s.as_bytes()).collect();
-//     for a in value{
-//         listofvecs.push(a.to_string());
-//     }
-    
-//     savepreference(app_name.clone(),key.clone(),serde_json::to_string_pretty(&listofvecs).unwrap());
-        
-//     // savepreference(app_name.clone(),key.clone(),serde_json::to_string(&listofvecs).unwrap())
-// }
-
-// pub fn addtolist<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
-//     let app_name:String=app_name.into();
-//     let key:String=key.into();
-//     let mut listofvecs:Vec<String>=match(getfromlist(app_name.clone(), key.clone())){
-//         Ok(alreadycontents) => alreadycontents,
-//         Err(_) => Vec::new(),
-//     };
-//     // let vecofwhat=value.to_string().as_bytes();
-//     // let encoded: String = getencodedstring(value.to_string());
-//     let encoded: String = getencodedstring(value.to_string());
-//     // let utf8_bytes_list: Vec<&[u8]> = value.to_string().chars().into_iter().map(|s| s.as_bytes()).collect();
-//     listofvecs.push(encoded);
-//     savepreference(app_name.clone(),key.clone(),    listofvecs.join("\n"));
-        
-//     // savepreference(app_name.clone(),key.clone(),serde_json::to_string(&listofvecs).unwrap())
-// }
-fn config_folder_path(app_name:&String) -> PathBuf {
-    match(dirs::config_dir()){
-        Some(system_config_dir) =>{
-            system_config_dir
-                    .join(app_name)
+/// Gets the path to the config folder for the given app name.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+///
+/// # Returns
+///
+/// The path to the config folder.
+pub fn config_folder_path(app_name: &str) -> PathBuf {
+    match dirs::config_dir() {
+        Some(system_config_dir) => {
+            system_config_dir.join(app_name)
         },
         None => {
-           panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
+            panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
         },
     }
 }
-// pub fn getfromlist(app_name:impl Into<String>,key:impl Into<String>)->Result<Vec<String>,()>{
-//     let key =key.into();
-//     let app_name =app_name.into();
-//     let input= match(File::open(&config_path(&app_name,&key))){
-//         Ok(mut file) => {
-//             let mut buf = String::new();
-//             file.read_to_string(&mut buf)
-//                 .expect("Cannot read to string");
-//             buf
-//         },
-//         Err(_) => {
-//             return Err(())
-//             // savepreference(app_name,&key, &defvalue.to_string());
-//             // defvalue.to_string()
-//         },
-//     };
-//     // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-//     let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>();
-//     // url2str(j)
-//     // get_decoded_string(j);
-//     // vec![]
-//     Ok(vec_of_string)
-// }
-// pub fn getfromlistasjson(app_name:impl Into<String>,key:impl Into<String>)->Result<Vec<String>,()>{
-//     let key =key.into();
-//     let app_name =app_name.into();
-//     let input= match(File::open(&config_path(&app_name,&key))){
-//         Ok(mut file) => {
-//             let mut buf = String::new();
-//             file.read_to_string(&mut buf)
-//                 .expect("Cannot read to string");
-//             buf
-//         },
-//         Err(_) => {
-//             return Err(())
-//             // savepreference(app_name,&key, &defvalue.to_string());
-//             // defvalue.to_string()
-//         },
-//     };
-//     let file=File::open(&config_path(&app_name,&key)).map_err(|err|{
-//         eprintln!("Fil coild not be opened:{err}")
 
-//     })?;
-//     // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-//     let listdecoded:Vec<String>=serde_json::from_reader(BufReader::new(file)).map_err(|err|{
-//         eprintln!("Fil coild not be opened:{err}")
-
-//     })?;
-//     // let vec_of_string = listdecoded.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>();
-//     // url2str(j)
-//     // get_decoded_string(j);
-//     // vec![]
-//     Ok(listdecoded)
-// }
-
-// pub fn getallfromlist(app_name:impl Into<String>)->Vec<(String,String)>{
-//     let app_name=app_name.into();
-//     // println!("{app_name}");
-//     let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
-//     // println!("{}",gh);
-//     // let key =key.into();
-//     gh.push_str("/*.txt");
-//     let mut list_of_strings:Vec<(String,String)>=vec![];
-//     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-//     for entry in glob::glob(&gh)
-//         .expect("Failed to read glob pattern") {
-//         match entry {
-
-//             Ok(path) =>{
-//                 let input= match(File::open(&path)){
-//                     Ok(mut file) => {
-//                         let mut buf = String::new();
-//                         file.read_to_string(&mut buf).expect("Cannot read to string");
-//                         buf
-//                     },
-//                     Err(_) => {
-//                         "".to_string()
-//                         // savepreference(app_name,&key, &defvalue.to_string());
-//                         // defvalue.to_string()
-//                     },
-//                 };
-//                 let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
-//                 let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
-
-//                 // for i in vec_of_string{
-//                     list_of_strings.push((file_name.to_owned(),vec_of_string));
-//                 // }
-                
-//             },
-//             Err(e) => {
-//                 eprintln!("error with glob {:?}", e);
-                
-//             },
-//         }
-//     }
-    
-//     // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-//     // url2str(j)
-//     // get_decoded_string(j);
-//     // vec![]
-//     list_of_strings
-// }
-// fn readserdefromfile(input:&File)->Result<Vec<String>,()>{
-//     let listdecoded:Vec<String>=serde_json::from_reader(BufReader::new(input)).map_err(|err|{
-//         eprintln!("Fil could not be opened:{err}")
-
-//     })?;
-//     Ok(listdecoded)
-// }
-// #[test]
-// fn test_addtojson(){
-//     let g=vec!["date","event","status","description","repeat"];
-//     addlistasjson("todo","test", g.clone());
-//     addlistasjson("todo","test1", g.clone());
-//     addlistasjson("todo","test2", g.clone());
-//     // println!("{:?}", getfromjsonlist("todo","test").unwrap());
-//     assert_eq!(g,getfromlistasjson("todo","test").unwrap());
-//     println!("{:?}",getallasjsonlist("todo"))
-// }
-// pub fn getallasjsonlist(app_name:impl Into<String>)->Vec<(String,Vec<String>)>{
-//     let app_name=app_name.into();
-//     // println!("{app_name}");
-//     let mut gh=config_folder_path(&app_name).to_str().unwrap().to_string();
-//     // println!("{}",gh);
-//     // let key =key.into();
-//     gh.push_str("/*.txt");
-//     let mut list_of_strings:Vec<(String,Vec<String>)>=vec![];
-//     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-//     for entry in glob::glob(&gh)
-//         .expect("Failed to read glob pattern") {
-//         match entry {
-
-//             Ok(path) =>{
-//                 let input= match(File::open(&path)){
-//                     Ok(mut file) => {
-//                         // let mut buf = String::new();
-//                         // file.read_to_string(&mut buf).expect("Cannot read to string");
-//                         // buf
-//                         file
-//                     },
-//                     Err(_) => {
-//                         return vec![]
-//                         // savepreference(app_name,&key, &defvalue.to_string());
-//                         // defvalue.to_string()
-//                     },
-//                 };
-//                 // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
-//                 println!("{:?}",input);
-//                 let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
-//                 let file_name =&path.file_stem().unwrap().to_str().unwrap().to_string();
-
-//                 // for i in vec_of_string{
-//                     list_of_strings.push((file_name.to_owned(),listdecoded));
-//                 // }
-                
-//             },
-//             Err(e) => {
-//                 eprintln!("error with glob {:?}", e);
-                
-//             },
-//         }
-//     }
-    
-    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-    // url2str(j)
-    // get_decoded_string(j);
-    // vec![]
-//     list_of_strings
-// }
 /// Returns a vector of tuples containing all the files in the specified app's configuration directory.
 ///
 /// # Arguments
@@ -838,68 +619,121 @@ fn config_folder_path(app_name:&String) -> PathBuf {
 ///     ("file3".to_owned(), "content3".to_owned())
 /// ]
 /// ```
-pub fn getall(app_name:impl Into<String>)->Vec<(String,String)>{
+/// Gets all the entries in the buffer for the given app name.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+///
+/// # Returns
+///
+/// A vector of tuples containing the key and value of each entry in the buffer.
+pub fn getall(app_name: impl Into<String>) -> Vec<(String, String)> {
     getallcustom(app_name, "txt")
 }
-pub fn savebuffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:impl Into<String>,buffersize:i8){
+
+/// Saves the given value to the buffer for the given app name and custom filename with extension.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `custom_filename_with_extension`: The custom filename with extension.
+/// * `value`: The value to save.
+/// * `buffersize`: The maximum number of strings to keep in the buffer.
+///
+/// # Returns
+///
+/// The updated buffer.
+pub fn savebuffer(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: impl Into<String>, buffersize: i8) {
     // getcustom(app_name, key, defvalue);
-    let app_name=app_name.into();
-    let filename=custom_filename_with_extension.into();
-    let stringtos=value.into();
-    let mut vectos=saveStringtobuffer(&app_name,stringtos,buffersize,&filename);
+    let app_name = app_name.into();
+    let filename = custom_filename_with_extension.into();
+    let stringtos = value.into();
+    let mut vectos = saveStringtobuffer(&app_name, stringtos, buffersize, &filename);
     // vectos.reverse();
-    saveVecOfStrings(&app_name,vectos, &filename);
+    saveVecOfStrings(&app_name, vectos, &filename);
 }
-#[test]
-fn testsave(){
-    savebuffer("prefstore", "last.save", "yu", 3);
-    savebuffer("prefstore", "last.save", "", 3);
-    savebuffer("prefstore", "last.save", "yu3", 3);
-    savebuffer("prefstore", "last.save", "yu4", 3);
-    savebuffer("prefstore", "last.save", "yu5", 3);
-    savebuffer("prefstore", "last.save", "yu6", 3);
-    println!("{:?}",getbuffer("prefstore", "last.save"));
-    println!("{:?}",get_last_from_buffer("prefstore", "last.save"));
-    // match(getbuffer("prefstore", "last.save")){
-    //     Ok(g) => println!("{:?}",g.last()),
-    //     Err(_) => print!(""),
-    // };
-}
-pub fn get_last_from_buffer(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>)->String{
+
+/// Gets the last string from the buffer for the given app name and custom filename with extension.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `custom_filename_with_extension`: The custom filename with extension.
+///
+/// # Returns
+///
+/// The last string from the buffer, or an empty string if the buffer is empty.
+pub fn get_last_from_buffer(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>) -> String {
     getbuffer(&app_name.into(), &custom_filename_with_extension.into()).pop().unwrap_or(String::new()).to_string()
 }
-// Assume the data structure is a vector of strings
-fn saveStringtobuffer(app_name:&str,string: String,n:i8, filename: &str)->Vec<String> {
-    let mut ds=getbuffer(app_name,filename);
+
+/// Saves the given string to the buffer for the given app name and filename.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `string`: The string to save.
+/// * `n`: The maximum number of strings to keep in the buffer.
+/// * `filename`: The filename of the buffer.
+///
+/// # Returns
+///
+/// The updated buffer.
+fn saveStringtobuffer(app_name: &str, string: String, n: i8, filename: &str) -> Vec<String> {
+    let mut ds = getbuffer(app_name, filename);
     // Push the new string to the end of the vector
     ds.push(string.clone());
-    println!("{}",string);
-    println!("{}/{}--------{:?}",ds.len(),n as usize,ds);
-    if ds.len() > n as usize{
+    // println!("{}", string);
+    // println!("{}/{}--------{:?}", ds.len(), n as usize, ds);
+    if ds.len() > n as usize {
         println!("removing");
         ds.remove(0);
     }
     ds
 }
-fn saveVecOfStrings(app_name:&str,strings: Vec<String>, file_name: &str) -> Result<(), Error> {
+
+/// Saves a vector of strings to a file.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `strings`: The vector of strings to save.
+/// * `file_name`: The filename of the file to save to.
+///
+/// # Returns
+///
+/// A `Result` with an `Ok` value if the operation was successful, or an `Err` value
+/// containing an error message if the operation failed.
+fn saveVecOfStrings(app_name: &str, strings: Vec<String>, file_name: &str) -> Result<(), Error> {
     // Open the file for writing, creating it if it doesn't exist
     let mut file = opencustomperlinetovec(app_name, file_name);
     clearcustom(app_name, file_name);
     initcustomfile(app_name, file_name, "");
     // Iterate over the strings in the vector
     for string in strings {
-        if(string!=""){
-
+        if !string.is_empty() {
             appendcustomnewline(app_name, file_name, string);
         }
     }
     // Return Ok if no errors occurred
     Ok(())
 }
-// Assume the file name is a string slice
-pub fn getbuffer(app_name:&str,file_name: &str) -> Vec<String> {
+
+/// Gets the buffer for the given app name and file name.
+///
+/// # Arguments
+///
+/// * `app_name`: The name of the app.
+/// * `file_name`: The filename of the file to read from.
+///
+/// # Returns
+///
+/// A vector of strings containing the contents of the buffer.
+pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
     opencustomperlinetovec(app_name, file_name)
 }
+
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
 ///
 /// # Arguments
@@ -968,21 +802,10 @@ pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String
         }
     }
     
-    // let j:Vec<String>=serde_json::from_str(&input).unwrap();
-    // url2str(j)
-    // get_decoded_string(j);
-    // vec![]
+    
     list_of_strings
 }
-// #[test]
-//     fn work_with_list(){
-//         // clearpreference(app_name, key)
-//         let app_name="todo";
-//         let key="date";
-//         let value="whatsup";
-//         addtolist(app_name, key, value);
-//         println!("{:?}",getallfromlist(app_name))
-//     }
+
 #[cfg(test)]
 mod prefstore_test {
     use super::*;
@@ -1043,6 +866,18 @@ mod prefstore_test {
         let f64_value = "3.14".to_string().tof64();
         assert_eq!(f64_value, 3.14);
     }
+
+    // #[test]
+    // fn test_buffer(){
+    //     savebuffer("prefstore", "last.save", "yu", 3);
+    //     savebuffer("prefstore", "last.save", "", 3);
+    //     savebuffer("prefstore", "last.save", "yu3", 3);
+    //     savebuffer("prefstore", "last.save", "yu4", 3);
+    //     savebuffer("prefstore", "last.save", "yu5", 3);
+    //     savebuffer("prefstore", "last.save", "yu6", 3);
+    //     println!("{:?}",getbuffer("prefstore", "last.save"));
+    //     println!("{:?}",get_last_from_buffer("prefstore", "last.save"));
+    // }
 }
 
 // This is a Rust module that provides a preference store. It allows you to save and retrieve preferences for your application. The preferences are stored in the system's configuration directory.
