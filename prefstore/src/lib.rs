@@ -329,7 +329,7 @@ pub fn clearall(app_name: impl Into<String>, file_extension: &str) {
         .to_string();
 
     // Append the glob pattern to match files with the given extension.
-    gh.push_str(&format!("/*.{}", file_extension));
+    gh.push_str(&format!("/**/*.{}", file_extension));
 
     // Iterate over all files that match the glob pattern and attempt to remove them.
     for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
@@ -755,12 +755,19 @@ pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
 /// }
 /// ```
 pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
+    getallcustomwithin(app_name,"", file_extension)
+}
+pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extension:&str)->Vec<(String,String)>{
     let app_name=app_name.into();
     // println!("{app_name}");
     let mut gh=config_folder_path(&app_name).to_str().expect("could not find config folder path").to_string();
     // println!("{}",gh);
     // let key =key.into();
-    gh.push_str(&format!("/*.{}",file_extension));
+    let y=format!("/{}",sub_path);
+    let subpath=if(sub_path==""){
+        ""}else{
+           &y};
+    gh.push_str(&format!("{}/**/*.{}",sub_path,file_extension));
     let mut list_of_strings:Vec<(String,String)>=vec![];
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
     for entry in glob::glob(&gh)
@@ -898,3 +905,27 @@ mod prefstore_test {
 // These methods can be used to convert the string returned by getpreference to the desired type.
 
 // The module also includes a test module prefstore_test with tests for the savepreference, getpreference, and clearpreference functions.
+
+#[test]
+fn globtest(){
+    let mut gh = config_folder_path("filedime")
+    .to_str()
+    .unwrap()
+    .to_string();
+
+    // Append the glob pattern to match files with the given extension.
+    gh.push_str(&format!("/**/*.{}", "fds"));
+
+// Iterate over all files that match the glob pattern and attempt to remove them.
+for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+    match entry {
+        Ok(path) => {
+            println!("{:?}",path);
+            // remove_file(path);
+        }
+        Err(e) => {
+            eprintln!("error with glob {:?}", e);
+        }
+    }
+}
+}
