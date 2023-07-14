@@ -57,6 +57,19 @@ pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_e
         .expect("Cannot create file."), "{}", value.to_string());
         
 }
+#[test]
+fn uiouy(){
+    save_else_where("/tmp/new/try.json", "value");
+}
+pub fn save_else_where<T: ToString>(custom_filename_with_extension: impl Into<String>,value:T){
+    let key=custom_filename_with_extension.into();
+    let fname=" #savecustom";
+    create_dir_all(Path::new(&key).parent().expect(&format!("Cannot find path to {fname}")))
+        .expect(&format!("cannot create dirs necessary to {fname}"));
+    write!(File::create(&Path::new(&key))
+        .expect("Cannot create file."), "{}", value.to_string());
+        
+}
 /// Initializes the file with the given app name and key, with the given value.
 ///
 /// # Arguments
@@ -755,9 +768,9 @@ pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
 /// }
 /// ```
 pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
-    getallcustomwithin(app_name,"", file_extension)
+    getallcustomwithin(app_name,"", file_extension).into_iter().collect()
 }
-pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extension:&str)->Vec<(String,String)>{
+pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extension:&str)->HashMap<String,String>{
     let app_name=app_name.into();
     // println!("{app_name}");
     let mut gh=config_folder_path(&app_name).to_str().expect("could not find config folder path").to_string();
@@ -767,8 +780,8 @@ pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extensio
     let subpath=if(sub_path==""){
         ""}else{
            &y};
-    gh.push_str(&format!("{}/**/*.{}",sub_path,file_extension));
-    let mut list_of_strings:Vec<(String,String)>=vec![];
+    gh.push_str(&format!("{}/**/*.{}",subpath,file_extension));
+    let mut list_of_strings:HashMap<String,String>=HashMap::new();
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
     for entry in glob::glob(&gh)
         .expect("Failed to read glob pattern") {
@@ -783,7 +796,7 @@ pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extensio
                         // file
                     },
                     Err(_) => {
-                        return vec![]
+                        return HashMap::new()
                         // savepreference(app_name,&key, &defvalue.to_string());
                         // defvalue.to_string()
                     },
@@ -798,7 +811,7 @@ pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extensio
                 .to_string();
 
                 // for i in vec_of_string{
-                    list_of_strings.push((file_name.to_owned(),input));
+                    list_of_strings.insert(file_name.to_owned(),input);
                 // }
                 
             },
@@ -908,24 +921,25 @@ mod prefstore_test {
 
 #[test]
 fn globtest(){
-    let mut gh = config_folder_path("filedime")
-    .to_str()
-    .unwrap()
-    .to_string();
+    println!("1--------->{:?}",getallcustomwithin("filedime", "custom_scripts","fds"));
+//     let mut gh = config_folder_path("filedime")
+//     .to_str()
+//     .unwrap()
+//     .to_string();
 
-    // Append the glob pattern to match files with the given extension.
-    gh.push_str(&format!("/**/*.{}", "fds"));
+//     // Append the glob pattern to match files with the given extension.
+//     gh.push_str(&format!("/**/*.{}", "fds"));
 
-// Iterate over all files that match the glob pattern and attempt to remove them.
-for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
-    match entry {
-        Ok(path) => {
-            println!("{:?}",path);
-            // remove_file(path);
-        }
-        Err(e) => {
-            eprintln!("error with glob {:?}", e);
-        }
-    }
-}
+// // Iterate over all files that match the glob pattern and attempt to remove them.
+// for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+//     match entry {
+//         Ok(path) => {
+//             println!("{:?}",path);
+//             // remove_file(path);
+//         }
+//         Err(e) => {
+//             eprintln!("error with glob {:?}", e);
+//         }
+//     }
+// }
 }
