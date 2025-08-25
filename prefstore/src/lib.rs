@@ -693,7 +693,7 @@ pub fn config_folder_path(app_name: &str) -> std::io::Result<PathBuf> {
 /// # Returns
 ///
 /// A vector of tuples containing the key and value of each entry in the buffer.
-pub fn getall(app_name: impl Into<String>) -> Vec<(String, String)> {
+pub fn getall(app_name: impl Into<String>) -> std::io::Result<Vec<(String, String)>> {
     getallcustom(app_name, "txt")
 }
 
@@ -708,15 +708,15 @@ pub fn getall(app_name: impl Into<String>) -> Vec<(String, String)> {
 ///
 /// # Returns
 ///
-/// The updated buffer.
-pub fn savebuffer(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: impl Into<String>, buffersize: i8) {
+/// A Result with Ok if successful or an IO error.
+pub fn savebuffer(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: impl Into<String>, buffersize: i8) -> std::io::Result<()> {
     // getcustom(app_name, key, defvalue);
     let app_name = app_name.into();
     let filename = custom_filename_with_extension.into();
     let stringtos = value.into();
-    let mut vectos = saveStringtobuffer(&app_name, stringtos, buffersize, &filename);
+    let vectos = saveStringtobuffer(&app_name, stringtos, buffersize, &filename)?;
     // vectos.reverse();
-    saveVecOfStrings(&app_name, vectos, &filename);
+    saveVecOfStrings(&app_name, vectos, &filename)
 }
 
 /// Gets the last string from the buffer for the given app name and custom filename with extension.
@@ -728,9 +728,10 @@ pub fn savebuffer(app_name: impl Into<String>, custom_filename_with_extension: i
 ///
 /// # Returns
 ///
-/// The last string from the buffer, or an empty string if the buffer is empty.
-pub fn get_last_from_buffer(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>) -> String {
-    getbuffer(&app_name.into(), &custom_filename_with_extension.into()).pop().unwrap_or(String::new()).to_string()
+/// A Result containing the last string from the buffer, or an IO error.
+pub fn get_last_from_buffer(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>) -> std::io::Result<String> {
+    let buffer = getbuffer(&app_name.into(), &custom_filename_with_extension.into())?;
+    Ok(buffer.last().unwrap_or(&String::new()).clone())
 }
 
 /// Saves the given string to the buffer for the given app name and filename.
@@ -744,9 +745,9 @@ pub fn get_last_from_buffer(app_name: impl Into<String>, custom_filename_with_ex
 ///
 /// # Returns
 ///
-/// The updated buffer.
-fn saveStringtobuffer(app_name: &str, string: String, n: i8, filename: &str) -> Vec<String> {
-    let mut ds = getbuffer(app_name, filename);
+/// A Result containing the updated buffer or an IO error.
+fn saveStringtobuffer(app_name: &str, string: String, n: i8, filename: &str) -> std::io::Result<Vec<String>> {
+    let mut ds = getbuffer(app_name, filename)?;
     // Push the new string to the end of the vector
     ds.push(string.clone());
     // println!("{}", string);
@@ -755,7 +756,7 @@ fn saveStringtobuffer(app_name: &str, string: String, n: i8, filename: &str) -> 
         println!("removing");
         ds.remove(0);
     }
-    ds
+    Ok(ds)
 }
 
 /// Saves a vector of strings to a file.
@@ -772,7 +773,7 @@ fn saveStringtobuffer(app_name: &str, string: String, n: i8, filename: &str) -> 
 /// containing an error message if the operation failed.
 fn saveVecOfStrings(app_name: &str, strings: Vec<String>, file_name: &str) -> Result<(), Error> {
     // Open the file for writing, creating it if it doesn't exist
-    let _ = opencustomperlinetovec(app_name, file_name).unwrap_or_default();
+    let _ = opencustomperlinetovec(app_name, file_name)?;
     clearcustom(app_name, file_name);
     initcustomfile(app_name, file_name, "")?;
     // Iterate over the strings in the vector
@@ -794,9 +795,9 @@ fn saveVecOfStrings(app_name: &str, strings: Vec<String>, file_name: &str) -> Re
 ///
 /// # Returns
 ///
-/// A vector of strings containing the contents of the buffer.
-pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
-    opencustomperlinetovec(app_name, file_name).unwrap_or_default()
+/// A Result containing a vector of strings with the buffer contents or an IO error.
+pub fn getbuffer(app_name: &str, file_name: &str) -> std::io::Result<Vec<String>> {
+    opencustomperlinetovec(app_name, file_name)
 }
 
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
@@ -819,8 +820,9 @@ pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
 ///     println!("{}: {}", name, contents);
 /// }
 /// ```
-pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
-    getallcustomwithin(app_name,"", file_extension).unwrap_or_default().into_iter().collect()
+pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->std::io::Result<Vec<(String,String)>>{
+    let map = getallcustomwithin(app_name,"", file_extension)?;
+    Ok(map.into_iter().collect())
 }
 pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extension:&str)->std::io::Result<HashMap<String,String>>{
     let app_name=app_name.into();
@@ -889,7 +891,7 @@ mod prefstore_test {
     fn test_getall() {
         savecustom("myapp", "custom1", "value1");
         savecustom("myapp", "custom2", "value2");
-        let all_custom = getall("myapp");
+        let all_custom = getall("myapp").unwrap();
         assert_eq!(all_custom.len(), 2);
         assert!(all_custom.contains(&("custom1".to_string(), "value1".to_string())));
         assert!(all_custom.contains(&("custom2".to_string(), "value2".to_string())));
@@ -1001,5 +1003,5 @@ fn globtest(){
 
 #[test]
 fn trvy(){
-    crate::getall("perlink").is_empty();
+    crate::getall("perlink").unwrap().is_empty();
 }

@@ -70,11 +70,11 @@ fn main() -> Result<()> {
     savebuffer(APPNAME, "recent_actions", "Profile updated", 5);
 
     // Get last item from buffer
-    let last_action = get_last_from_buffer(APPNAME, "recent_actions");
+    let last_action = get_last_from_buffer(APPNAME, "recent_actions")?;
     println!("Last action: {}", last_action);
 
     // Get entire buffer
-    let all_actions = getbuffer(APPNAME, "recent_actions");
+    let all_actions = getbuffer(APPNAME, "recent_actions")?;
     println!("All recent actions:");
     for (i, action) in all_actions.iter().enumerate() {
         println!("  {}: {}", i + 1, action);
@@ -85,14 +85,14 @@ fn main() -> Result<()> {
     println!("------------------");
 
     // Get all preferences
-    let all_prefs = getall(APPNAME);
+    let all_prefs = getall(APPNAME)?;
     println!("All preferences:");
     for (key, value) in all_prefs {
         println!("  {}: {}", key, value);
     }
 
     // Get all custom files
-    let all_custom = getallcustom(APPNAME, "txt");
+    let all_custom = getallcustom(APPNAME, "txt")?;
     println!("All custom txt files:");
     for (name, content) in all_custom {
         println!("  {}: {}", name, content);
