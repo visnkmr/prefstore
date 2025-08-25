@@ -26,7 +26,7 @@ const MSG_NO_SYSTEM_CONFIG_DIR: &str = "no system config directory detected";
 /// # Errors
 ///
 /// This function will return an error if it is unable to create the necessary directories or file.
-pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T){
+pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<String>,value:T) -> std::io::Result<()> {
     savecustom(app_name, format!("{}.txt",key.into()), value)
 }
 /// Save custom data to a file with the given app name, filename, and value.
@@ -46,29 +46,45 @@ pub fn savepreference<T: ToString>(app_name:impl Into<String>,key: impl Into<Str
 /// ```rust
 /// savecustom("my_app", "my_file.txt", "Hello, world!");
 /// ```
-pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T){
+///
+/// # Returns
+///
+/// A `Result` with an `Ok` value if the operation was successful, or an `Err` value
+/// containing an IO error if the operation failed.
+pub fn savecustom<T: ToString>(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>,value:T) -> std::io::Result<()> {
     let key=custom_filename_with_extension.into();
     let app_name=app_name.into();
     let fname=" #savecustom";
-    create_dir_all(&customfile_path(&app_name,&key).parent()
-        .expect(&format!("Cannot find path to {fname}")))
-        .expect(&format!("cannot create dirs necessary to {fname}"));
-    write!(File::create(&customfile_path(&app_name,&key))
-        .expect("Cannot create file."), "{}", value.to_string());
-        
+
+    let path = customfile_path(&app_name,&key)?;
+    let parent_path = path.parent()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, format!("Cannot find path to {fname}")))?;
+
+    create_dir_all(parent_path)?;
+
+    let mut file = File::create(&path)?;
+    write!(file, "{}", value.to_string())?;
+
+    Ok(())
 }
 #[test]
 fn uiouy(){
     save_else_where("/tmp/new/try.json", "value");
 }
-pub fn save_else_where<T: ToString>(custom_filename_with_extension: impl Into<String>,value:T){
+pub fn save_else_where<T: ToString>(custom_filename_with_extension: impl Into<String>,value:T) -> std::io::Result<()> {
     let key=custom_filename_with_extension.into();
     let fname=" #savecustom";
-    create_dir_all(Path::new(&key).parent().expect(&format!("Cannot find path to {fname}")))
-        .expect(&format!("cannot create dirs necessary to {fname}"));
-    write!(File::create(&Path::new(&key))
-        .expect("Cannot create file."), "{}", value.to_string());
-        
+
+    let path = Path::new(&key);
+    let parent_path = path.parent()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, format!("Cannot find path to {fname}")))?;
+
+    create_dir_all(parent_path)?;
+
+    let mut file = File::create(&path)?;
+    write!(file, "{}", value.to_string())?;
+
+    Ok(())
 }
 /// Initializes the file with the given app name and key, with the given value.
 ///
@@ -86,14 +102,19 @@ pub fn initcustomfile<T: ToString>(app_name: impl Into<String>, custom_filename_
     let key = custom_filename_with_extension.into();
     let app_name = app_name.into();
     let fname = "#initcustom";
-    
-    create_dir_all(&customfile_path(&app_name, &key).parent().expect(&format!("Cannot find path to {}", fname))).expect(&format!("cannot create dirs necessary to {}", fname));
+
+    let path = customfile_path(&app_name, &key)?;
+    let parent_path = path.parent()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, format!("Cannot find path to {}", fname)))?;
+
+    create_dir_all(parent_path)?;
+
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
-        .open(&customfile_path(&app_name, &key))?;
-    file.write_all(format!("{}", value.to_string()).as_bytes());
-        Ok(())
+        .open(&path)?;
+    file.write_all(format!("{}", value.to_string()).as_bytes())?;
+    Ok(())
 }
 
 /// Appends a value to a custom file for the given application.
@@ -114,12 +135,20 @@ pub fn initcustomfile<T: ToString>(app_name: impl Into<String>, custom_filename_
 /// * `app_name`: The name of the app.
 /// * `custom_filename_with_extension`: The custom filename with extension.
 /// * `value`: The value to append.
-pub fn appendcustom<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) {
+pub fn appendcustom<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) -> std::io::Result<()> {
     let key = custom_filename_with_extension.into();
     let fname = "#appendcustom";
     let app_name = app_name.into();
-    create_dir_all(&customfile_path(&app_name, &key).parent().expect(&format!("Cannot find path to {}", fname))).expect(&format!("cannot create dirs necessary to {}", fname));
-    write!(File::options().create(true).append(true).open(&customfile_path(&app_name, &key)).expect("Cannot create file."), "{}", value.to_string());
+
+    let path = customfile_path(&app_name, &key)?;
+    let parent_path = path.parent()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, format!("Cannot find path to {}", fname)))?;
+
+    create_dir_all(parent_path)?;
+
+    let mut file = File::options().create(true).append(true).open(&path)?;
+    write!(file, "{}", value.to_string())?;
+    Ok(())
 }
 
 /// Appends the given value to the file with the given app name and key, followed by a newline character.
@@ -129,12 +158,20 @@ pub fn appendcustom<T: ToString>(app_name: impl Into<String>, custom_filename_wi
 /// * `app_name`: The name of the app.
 /// * `custom_filename_with_extension`: The custom filename with extension.
 /// * `value`: The value to append.
-pub fn appendcustomnewline<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) {
+pub fn appendcustomnewline<T: ToString>(app_name: impl Into<String>, custom_filename_with_extension: impl Into<String>, value: T) -> std::io::Result<()> {
     let key = custom_filename_with_extension.into();
     let fname = "#appendcustomnewline";
     let app_name = app_name.into();
-    create_dir_all(&customfile_path(&app_name, &key).parent().expect(&format!("Cannot find path to {}", fname))).expect(&format!("cannot create dirs necessary to {}", fname));
-    writeln!(File::options().create(true).append(true).open(&customfile_path(&app_name, &key)).expect("Cannot create file."), "{}", value.to_string());
+
+    let path = customfile_path(&app_name, &key)?;
+    let parent_path = path.parent()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, format!("Cannot find path to {}", fname)))?;
+
+    create_dir_all(parent_path)?;
+
+    let mut file = File::options().create(true).append(true).open(&path)?;
+    writeln!(file, "{}", value.to_string())?;
+    Ok(())
 }
 
 
@@ -167,6 +204,10 @@ fn custom_file_name(filename:String) -> String {
 /// * `app_name` - A string slice that holds the name of the application.
 /// * `filename` - A string slice that holds the name of the configuration file.
 ///
+/// # Returns
+///
+/// A `Result` containing the path or an IO error if the system config directory cannot be found.
+///
 /// # Examples
 ///
 /// ```
@@ -174,22 +215,17 @@ fn custom_file_name(filename:String) -> String {
 ///
 /// let app_name = "myapp";
 /// let filename = "myconfig";
-/// let path = config_path(&app_name.to_string(), &filename.to_string());
-/// assert_eq!(path.to_str().unwrap(), "/home/user/.config/myapp/myconfig.txt");
+/// let path = config_path(&app_name.to_string(), &filename.to_string()).unwrap();
 /// ```
-///
-/// # Errors
-///
-/// This function will panic if the system config directory cannot be found.
-fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
+fn config_path(app_name:&String,filename:impl Into<String>) -> std::io::Result<PathBuf> {
     match(dirs::config_dir()){
         Some(system_config_dir) =>{
-            system_config_dir
+            Ok(system_config_dir
                     .join(app_name)
-                    .join(default_name(filename.into()))
+                    .join(default_name(filename.into())))
         },
         None => {
-           panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
+            Err(std::io::Error::new(std::io::ErrorKind::NotFound, MSG_NO_SYSTEM_CONFIG_DIR))
         },
     }
 }
@@ -210,38 +246,37 @@ fn config_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
 /// let app_name = String::from("myapp");
 /// let directory = prefstore_directory(&app_name);
 /// ```
-pub fn prefstore_directory(app_name:&String)->Result<PathBuf,()>{
-    Ok(
-        dirs::config_dir()
-        .expect("Config folder does not exist")
-        .join(app_name)
-    )    
+pub fn prefstore_directory(app_name:&String)->Result<PathBuf,std::io::Error>{
+    let config_dir = dirs::config_dir()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "Config folder does not exist"))?;
+
+    Ok(config_dir.join(app_name))
 }
-/// Returns the path to a custom file given the `app_name` and the `filename` 
-/// for the custom file. It joins the system configuration directory, the 
+/// Returns the path to a custom file given the `app_name` and the `filename`
+/// for the custom file. It joins the system configuration directory, the
 /// `app_name`, and the custom file name to create the full path.
 ///
 /// # Arguments
 ///
 /// * `app_name` - A reference to a `String` containing the name of the application.
-/// * `filename` - A value that can be converted into a `String` containing the name of 
+/// * `filename` - A value that can be converted into a `String` containing the name of
 ///                the custom file.
 ///
 /// # Returns
 ///
-/// The full path to the custom file as a `PathBuf` object.
-fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
+/// A `Result` containing the full path to the custom file or an IO error if the system config directory cannot be found.
+fn customfile_path(app_name:&String,filename:impl Into<String>) -> std::io::Result<PathBuf> {
     // Get the system configuration directory.
     match(dirs::config_dir()){
         Some(system_config_dir) =>{
             // Join the system configuration directory, the app name, and the custom file name.
-            system_config_dir
+            Ok(system_config_dir
                     .join(app_name)
-                    .join(custom_file_name(filename.into()))
+                    .join(custom_file_name(filename.into())))
         },
         None => {
-            // If there is no system configuration directory, panic with an error message.
-           panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
+            // If there is no system configuration directory, return an error.
+            Err(std::io::Error::new(std::io::ErrorKind::NotFound, MSG_NO_SYSTEM_CONFIG_DIR))
         },
     }
 }
@@ -264,9 +299,10 @@ fn customfile_path(app_name:&String,filename:impl Into<String>) -> PathBuf {
 /// # Errors
 ///
 /// This function will return an error if it is unable to remove the preference file.
-pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
-    remove_file(&config_path(&app_name.into(),&key.into()))
-        .expect("Could not clear preference.");
+pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>) -> std::io::Result<()> {
+    let path = config_path(&app_name.into(),&key.into())?;
+    remove_file(&path)?;
+    Ok(())
 }
 /// Deletes the custom file with the given name for the specified app.
 ///
@@ -309,15 +345,15 @@ pub fn clearpreference(app_name:impl Into<String>,key: impl Into<String>){
 /// }
 /// ```
 pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: impl Into<String>){
-    match(remove_file(&customfile_path(&app_name.into(),&custom_filename_with_extension.into()))){
-        Ok(_) => {
-            
-        },
-        Err(_) => {
-            
-        },
+    let path = match customfile_path(&app_name.into(),&custom_filename_with_extension.into()) {
+        Ok(path) => path,
+        Err(_) => return,
     };
-        // .expect("Could not clear preference.");
+
+    match remove_file(&path) {
+        Ok(_) => {},
+        Err(_) => {},
+    };
 }
 /// Clears all files with the given extension in the configuration folder for the given application.
 ///
@@ -332,29 +368,33 @@ pub fn clearcustom(app_name:impl Into<String>,custom_filename_with_extension: im
 /// # use prefstore::clearall;
 /// clearall("myapp", "txt");
 /// ```
-pub fn clearall(app_name: impl Into<String>, file_extension: &str) {
+pub fn clearall(app_name: impl Into<String>, file_extension: &str) -> std::io::Result<()> {
     let app_name = app_name.into();
 
     // Construct the path to the configuration folder for the application.
-    let mut gh = config_folder_path(&app_name)
+    let config_path = config_folder_path(&app_name)?;
+    let path_str = config_path
         .to_str()
-        .unwrap()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid path characters"))?
         .to_string();
 
     // Append the glob pattern to match files with the given extension.
-    gh.push_str(&format!("/**/*.{}", file_extension));
+    let gh = format!("{}/**/*.{}", path_str, file_extension);
 
     // Iterate over all files that match the glob pattern and attempt to remove them.
-    for entry in glob::glob(&gh).expect("Failed to read glob pattern") {
+    for entry in glob::glob(&gh).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))? {
         match entry {
             Ok(path) => {
-                remove_file(path);
+                if let Err(e) = remove_file(path) {
+                    eprintln!("Failed to remove file: {:?}", e);
+                }
             }
             Err(e) => {
                 eprintln!("error with glob {:?}", e);
             }
         }
     }
+    Ok(())
 }
 // #[no_mangle]
 /// Retrieves the preference with the given key for the given app_name. If the preference does not exist, it returns the default value provided.
@@ -381,7 +421,8 @@ pub fn clearall(app_name: impl Into<String>, file_extension: &str) {
 ///
 /// This function will return an error if it is unable to read the preference file or create a new preference file with the default value.
 pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
-    getcustom(app_name, format!("{}.txt", key.into()), defvalue)
+    let defvalue_str = defvalue.to_string();
+    getcustom(app_name, format!("{}.txt", key.into()), defvalue).unwrap_or(defvalue_str)
 }
 /// Retrieve the custom data from the specified custom file for the specified app,
 /// or save the default value and return it if the file does not exist.
@@ -406,28 +447,26 @@ pub fn getpreference<T:ToString>(app_name:impl Into<String>,key:impl Into<String
 /// println!("Custom data: {}", custom_data);
 /// ```
 
-pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->String{
+pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,defvalue:T)->std::io::Result<String>{
     let key =key.into();
     let app_name =app_name.into();
     if(!key.is_empty()){
-        match(File::open(&customfile_path(&app_name,&key))){
-                            Ok(mut file) => {
-                                let mut buf = String::new();
-
-                                file.read_to_string(&mut buf)
-                                    .expect("Cannot read to string");
-                                buf
-                            },
-                            Err(_) => {
-                                savecustom(app_name,&key, &defvalue.to_string());
-                                defvalue.to_string()
-                            },
-                        }
+        let path = customfile_path(&app_name,&key)?;
+        match(File::open(&path)){
+            Ok(mut file) => {
+                let mut buf = String::new();
+                file.read_to_string(&mut buf)?;
+                Ok(buf)
+            },
+            Err(_) => {
+                savecustom(app_name,&key, &defvalue.to_string())?;
+                Ok(defvalue.to_string())
+            },
+        }
     }
     else{
-        String::new()
+        Ok(String::new())
     }
-				
 }
 /// Opens the file with the given app name and key and reads the lines into a vector.
 ///
@@ -439,28 +478,29 @@ pub fn getcustom<T:ToString>(app_name:impl Into<String>,key:impl Into<String>,de
 /// # Returns
 ///
 /// A vector of strings containing the lines of the file.
-pub fn opencustomperlinetovec(app_name: impl Into<String>, key: impl Into<String>) -> Vec<String> {
+pub fn opencustomperlinetovec(app_name: impl Into<String>, key: impl Into<String>) -> std::io::Result<Vec<String>> {
     let key = key.into();
     let app_name = app_name.into();
     // Create an empty vector to store the lines
     let mut lines = Vec::new();
     // Open the file and create a buffered reader
-    match File::open(&customfile_path(&app_name, &key)) {
-        Ok(mut file) => {
+    let path = customfile_path(&app_name, &key)?;
+    match File::open(&path) {
+        Ok(file) => {
             let reader = BufReader::new(file);
             // Iterate over the lines of the reader
             for line in reader.lines() {
                 // Get the line as a string and push it to the vector
-                let line = line.expect("Could not read line");
+                let line = line?;
                 lines.push(line);
             }
         },
         Err(_) => {
-            // Do nothing
+            // Do nothing - return empty vector
         },
     }
     // Return the vector of lines
-    lines
+    Ok(lines)
 }
 
 
@@ -479,21 +519,21 @@ pub fn opencustomperlinetovec(app_name: impl Into<String>, key: impl Into<String
 /// let key = "my_preference_key";
 /// let preference_value = getpreferencenodefault(app_name, key);
 /// ```
-pub fn getpreferencenodefault(app_name:impl Into<String>,key:impl Into<String>)->String{
+pub fn getpreferencenodefault(app_name:impl Into<String>,key:impl Into<String>)->std::io::Result<String>{
     use io::Read;
     let key =key.into();
     let app_name =app_name.into();
-				match(File::open(&config_path(&app_name,&key))){
-                    Ok(mut file) => {
-                        let mut buf = String::new();
-                        file.read_to_string(&mut buf)
-                            .expect("Cannot read to string");
-                        buf
-                    },
-                    Err(_) => {
-                        String::new()
-                    },
-                }
+    let path = config_path(&app_name,&key)?;
+    match(File::open(&path)){
+        Ok(mut file) => {
+            let mut buf = String::new();
+            file.read_to_string(&mut buf)?;
+            Ok(buf)
+        },
+        Err(_) => {
+            Ok(String::new())
+        },
+    }
 }
 
 pub trait ems<T>{
@@ -513,12 +553,16 @@ pub trait ems<T>{
     /// assert_eq!(bool_value, true);
     /// ```
     fn tobool(self)->bool;
-    
+
     /// Converts a String to an i32.
     ///
     /// # Arguments
     ///
     /// * `self` - A string slice that holds the value to be converted.
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the parsed i32 value or an error.
     ///
     /// # Examples
     ///
@@ -526,16 +570,20 @@ pub trait ems<T>{
     /// use prefstore::ems;
     ///
     /// let value = "42";
-    /// let i32_value = value.toi32();
+    /// let i32_value = value.toi32().unwrap();
     /// assert_eq!(i32_value, 42);
     /// ```
-    fn toi32(self)->i32;
-    
+    fn toi32(self)->Result<i32, std::num::ParseIntError>;
+
     /// Converts a String to an i128.
     ///
     /// # Arguments
     ///
     /// * `self` - A string slice that holds the value to be converted.
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the parsed i128 value or an error.
     ///
     /// # Examples
     ///
@@ -543,16 +591,20 @@ pub trait ems<T>{
     /// use prefstore::ems;
     ///
     /// let value = "99999999999999999999999999999999999999";
-    /// let i128_value = value.toi128();
+    /// let i128_value = value.toi128().unwrap();
     /// assert_eq!(i128_value, 99999999999999999999999999999999999999);
     /// ```
-    fn toi128(self)->i128;
-    
+    fn toi128(self)->Result<i128, std::num::ParseIntError>;
+
     /// Converts a String to an f64.
     ///
     /// # Arguments
     ///
     /// * `self` - A string slice that holds the value to be converted.
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the parsed f64 value or an error.
     ///
     /// # Examples
     ///
@@ -560,10 +612,10 @@ pub trait ems<T>{
     /// use prefstore::ems;
     ///
     /// let value = "3.14";
-    /// let f64_value = value.tof64();
+    /// let f64_value = value.tof64().unwrap();
     /// assert_eq!(f64_value, 3.14);
     /// ```
-    fn tof64(self)->f64;
+    fn tof64(self)->Result<f64, std::num::ParseFloatError>;
 }
 
 impl ems<String> for String{
@@ -577,16 +629,16 @@ impl ems<String> for String{
         };
         truth_value
     }
-    fn toi32(self)->i32{
-        self.parse::<i32>().unwrap()
+    fn toi32(self)->Result<i32, std::num::ParseIntError>{
+        self.parse::<i32>()
     }
-    fn toi128(self)->i128{
-        self.parse::<i128>().unwrap()
+    fn toi128(self)->Result<i128, std::num::ParseIntError>{
+        self.parse::<i128>()
     }
-    fn tof64(self)->f64{
-        self.parse::<f64>().unwrap()
+    fn tof64(self)->Result<f64, std::num::ParseFloatError>{
+        self.parse::<f64>()
     }
-} 
+}
 /// Gets the path to the config folder for the given app name.
 ///
 /// # Arguments
@@ -596,13 +648,13 @@ impl ems<String> for String{
 /// # Returns
 ///
 /// The path to the config folder.
-pub fn config_folder_path(app_name: &str) -> PathBuf {
+pub fn config_folder_path(app_name: &str) -> std::io::Result<PathBuf> {
     match dirs::config_dir() {
         Some(system_config_dir) => {
-            system_config_dir.join(app_name)
+            Ok(system_config_dir.join(app_name))
         },
         None => {
-            panic!("{}", MSG_NO_SYSTEM_CONFIG_DIR);
+            Err(std::io::Error::new(std::io::ErrorKind::NotFound, MSG_NO_SYSTEM_CONFIG_DIR))
         },
     }
 }
@@ -720,13 +772,13 @@ fn saveStringtobuffer(app_name: &str, string: String, n: i8, filename: &str) -> 
 /// containing an error message if the operation failed.
 fn saveVecOfStrings(app_name: &str, strings: Vec<String>, file_name: &str) -> Result<(), Error> {
     // Open the file for writing, creating it if it doesn't exist
-    let mut file = opencustomperlinetovec(app_name, file_name);
+    let _ = opencustomperlinetovec(app_name, file_name).unwrap_or_default();
     clearcustom(app_name, file_name);
-    initcustomfile(app_name, file_name, "");
+    initcustomfile(app_name, file_name, "")?;
     // Iterate over the strings in the vector
     for string in strings {
         if !string.is_empty() {
-            appendcustomnewline(app_name, file_name, string);
+            appendcustomnewline(app_name, file_name, string)?;
         }
     }
     // Return Ok if no errors occurred
@@ -744,7 +796,7 @@ fn saveVecOfStrings(app_name: &str, strings: Vec<String>, file_name: &str) -> Re
 ///
 /// A vector of strings containing the contents of the buffer.
 pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
-    opencustomperlinetovec(app_name, file_name)
+    opencustomperlinetovec(app_name, file_name).unwrap_or_default()
 }
 
 /// Retrieves the contents of all files with the given extension in the configuration folder for the given application.
@@ -768,35 +820,38 @@ pub fn getbuffer(app_name: &str, file_name: &str) -> Vec<String> {
 /// }
 /// ```
 pub fn getallcustom(app_name:impl Into<String>,file_extension:&str)->Vec<(String,String)>{
-    getallcustomwithin(app_name,"", file_extension).into_iter().collect()
+    getallcustomwithin(app_name,"", file_extension).unwrap_or_default().into_iter().collect()
 }
-pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extension:&str)->HashMap<String,String>{
+pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extension:&str)->std::io::Result<HashMap<String,String>>{
     let app_name=app_name.into();
     // println!("{app_name}");
-    let mut gh=config_folder_path(&app_name).to_str().expect("could not find config folder path").to_string();
-    // println!("{}",gh);
+    let config_path = config_folder_path(&app_name)?;
+    let path_str = config_path
+        .to_str()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "could not find config folder path"))?
+        .to_string();
+    // println!("{}",path_str);
     // let key =key.into();
     let y=format!("/{}",sub_path);
     let subpath=if(sub_path==""){
         ""}else{
            &y};
-    gh.push_str(&format!("{}/**/*.{}",subpath,file_extension));
+    let gh = format!("{}/**/*.{}",path_str,file_extension);
     let mut list_of_strings:HashMap<String,String>=HashMap::new();
     // println!("{:?}-----------------{:?}",gh,glob::glob(&gh).expect("Failed to read glob pattern"));
-    for entry in glob::glob(&gh)
-        .expect("Failed to read glob pattern") {
+    for entry in glob::glob(&gh).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))? {
         match entry {
 
             Ok(path) =>{
                 let input= match(File::open(&path)){
                     Ok(mut file) => {
                         let mut buf = String::new();
-                        file.read_to_string(&mut buf).expect("Cannot read to string");
+                        file.read_to_string(&mut buf)?;
                         buf
                         // file
                     },
                     Err(_) => {
-                        return HashMap::new()
+                        return Ok(HashMap::new())
                         // savepreference(app_name,&key, &defvalue.to_string());
                         // defvalue.to_string()
                     },
@@ -804,26 +859,26 @@ pub fn getallcustomwithin(app_name:impl Into<String>,sub_path:&str,file_extensio
                 // let vec_of_string = input.split("\n").map(|s| getdecoded(s).to_string()).collect::<Vec<String>>().join("\n");
                 println!("{:?}",input);
                 // let listdecoded:Vec<String>=readserdefromfile(&input).unwrap();
-                let file_name =&path.file_stem()
-                .expect("no file name found")
+                let file_name = path.file_stem()
+                .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "no file name found"))?
                 .to_str()
-                .expect("could not convert file name to str")
+                .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "could not convert file name to str"))?
                 .to_string();
 
                 // for i in vec_of_string{
                     list_of_strings.insert(file_name.to_owned(),input);
                 // }
-                
+
             },
             Err(e) => {
                 eprintln!("error with glob {:?}", e);
-                
+
             },
         }
     }
-    
-    
-    list_of_strings
+
+
+    Ok(list_of_strings)
 }
 
 #[cfg(test)]
@@ -842,15 +897,15 @@ mod prefstore_test {
 
     #[test]
     fn test_savecustom() {
-        savecustom("myapp", "custom1", "value1");
-        assert_eq!(getcustom("myapp", "custom1", "default"), "value1");
+        savecustom("myapp", "custom1", "value1").unwrap();
+        assert_eq!(getcustom("myapp", "custom1", "default").unwrap(), "value1");
     }
     
     #[test]
     fn test_clearcustom() {
-        savecustom("myapp", "custom1", "value1");
+        savecustom("myapp", "custom1", "value1").unwrap();
         clearcustom("myapp", "custom1");
-        assert_eq!(getcustom("myapp", "custom1", "default"), "default");
+        assert_eq!(getcustom("myapp", "custom1", "default").unwrap(), "default");
     }
 
     #[test]
@@ -877,13 +932,13 @@ mod prefstore_test {
         let bool_value = "true".to_string().tobool();
         assert_eq!(bool_value, true);
 
-        let i32_value = "42".to_string().toi32();
+        let i32_value = "42".to_string().toi32().unwrap();
         assert_eq!(i32_value, 42);
 
-        let i128_value = "99999999999999999999999999999999999999".to_string().toi128();
+        let i128_value = "99999999999999999999999999999999999999".to_string().toi128().unwrap();
         assert_eq!(i128_value, 99999999999999999999999999999999999999);
 
-        let f64_value = "3.14".to_string().tof64();
+        let f64_value = "3.14".to_string().tof64().unwrap();
         assert_eq!(f64_value, 3.14);
     }
 
@@ -921,7 +976,7 @@ mod prefstore_test {
 
 #[test]
 fn globtest(){
-    println!("1--------->{:?}",getallcustomwithin("filedime", "custom_scripts","fds"));
+    println!("1--------->{:?}",getallcustomwithin("filedime", "custom_scripts","fds").unwrap_or_default());
 //     let mut gh = config_folder_path("filedime")
 //     .to_str()
 //     .unwrap()
@@ -942,4 +997,9 @@ fn globtest(){
 //         }
 //     }
 // }
+}
+
+#[test]
+fn trvy(){
+    crate::getall("perlink").is_empty();
 }
